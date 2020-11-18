@@ -90,8 +90,8 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
             complete_deflection_matrix = np.column_stack((individual_deflection_matrix,
                                                           individual_coordinate_matrix[:, 1:]))
             geographical_complete_matrix = rotate_deflections(complete_deflection_matrix)
-            large_complete_file.append(complete_deflection_matrix)
-            large_geographical_complete_file.append(geographical_complete_matrix)
+            # large_complete_file.append(complete_deflection_matrix)
+            # large_geographical_complete_file.append(geographical_complete_matrix)
 
             earth_radius = 6371000
             depths = np.zeros((len(complete_deflection_matrix), 1))
