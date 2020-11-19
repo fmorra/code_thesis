@@ -1,6 +1,5 @@
-
-
-### Main file - python_reader_processing_only
+# Data processing 
+## Main file - python_reader_processing_only
 
 This is the main file of the data processing step, and begins with the definition of a series of parameters and paths used to locate the files to analyze and to store the files that will be successively generated if they do not exist already. The base path follows a naming convention for which the run folder is called "run_n", the iteration, step and stress iteration directories are all defined based on it and therefore the user only needs to modify one line to move the location of all the files to be generated. 
 
@@ -76,10 +75,10 @@ individual_path, complete_files_path, geographical_complete_files_path, large_no
 end_time_coordinate_reader = time.time() - start_time_coordinate_reader
 ```
 ---
-### Coordinate_reader and its functions 
+## Coordinate_reader and its functions 
 Coordinate_reader calls a series of functions to read data and associate stresses and deformations to their respective coordinates and additional values such as the latitude and longitude of the corresponding element or node, and they will be described in order here. A timer is set and run for each of them. The first function to be run is called dat_processor. 
 
-#### dat_processor
+### dat_processor
 ``` python
 node_lines, elem_lines, nset_lines, file_identifiers, new_earth_dat = dat_processor(dat_path)
 ```
@@ -155,7 +154,7 @@ The last part of the file creates a new .dat file with all the necessary informa
 
 ```
 After displaying the time spent to run this function, the next one is nodes_processor, which stores all the nodes and coordinates for each part to process in a separate .csv file. Moreover, a large file is created with a list of nodes and their coordinates for all parts.
-#### nodes_processor
+### nodes_processor
 The first part of the function defines, and if necessary creates, the paths where to save the files and also defines the headers to use for every .csv to file to create and initializes the large matrix of nodes for all parts, large_node_matrix.
 ```python
     # Define the relevant paths and if necessary create relevant directories
@@ -241,7 +240,7 @@ node_dictionary = {}
 ```
 After displaying again the time spent to run this function, coordinate_reader checks whether the user is processing stresses or deflections based on the value of sd_input. This happens because processing stresses requires an additional function before associating stresses and centroids, while the nodes can be directly associated to their deformation values. This is the case because the centroid coordinates need to be calculated and to do this each element must be associated to all the labels of nodes making it up.
 Because the functions to associates stresses to centroids and deformations to nodes are very similar, the stress one will be discussed first and then the deflection one will be described mainly through its difference with the aforementioned function.
-#### elems_processor
+### elems_processor
 This function starts by reprocessing the nset_lines list from dat_processor, since it contains 
 ```python
     new_elem_lines = elem_lines[0:len(node_lines) - 1]
@@ -307,7 +306,7 @@ The matrix whose element labels reset for each part is saved as .csv with or wit
                 large_elem_matrix_unsorted.append(elem_vector)
 ```
 This latter matrix is then sorted through a dictionary and stored in another variable called sorted_matrix. It has been decided to produce these three different outputs for future use, since they might be needed for other kinds of processing. After saving all the outputs, the next function starts. This is the crucial function of the process where the association between stress values and element centroids is made. 
-#### associate_stress_coord
+### associate_stress_coord
 The function starts by reading all the .csv files containing stress values and element nodes for each part.
 ```python
     file_extension = '.csv'
@@ -428,7 +427,7 @@ complete_file = np.hstack((part_matrix, centroid_coord[:, 1:]))
             complete_file = np.column_stack((complete_file, lat, lon))
 ```
 ---
-##### cart2geo
+#### cart2geo
 This function uses the cartesian to geographical angle relations to derive latitude and longitude for all centroids starting from the cartesian coordinate vectors.
 ```python
     X = cartesian_coordinates[:, 0]
@@ -443,7 +442,7 @@ This function uses the cartesian to geographical angle relations to derive latit
 After this, the centroid coordinate and complete matrix for each part is saved with or without headers. The next step is the conversion of all the stress values to the geographical coordinate system, performed in rotate_tensor.
 
 ---
-##### rotate_tensor
+#### rotate_tensor
 The function starts by allocating the matrix where to save the new stresses and its headers. The complete file is then opened and transformed into a matrix and an iteration starts over each of its lines. The stresses are read from the line and organized in a tensor, then the transformation tensor is also defined and filled up with the transformation cosines and the matrix operations for the reference system change is then carried out. The result is a tensor whose values are stored in the corresponding line of the matrix allocated previously.
 
 ```python
@@ -495,7 +494,7 @@ These new stresses are concatenated to the corresponding labels, radial distance
 ---
 The for cycle over each stress matrix is then exited and the last operation to carry out is the coupling of coupled stresses for the specified iteration, step and stress iteration with the corresponding depth etc., performed at the end of the script for part EARTH only. This has been necessary during the thesis work for analysis results and can be tweaked for more parts or be left out. This new matrix with all the values is then also saved in the same folder as the complete file for the other analyzed parts. The function then terminates.
 
-#### associate_deflections_coord
+### associate_deflections_coord
 This function, as said before, works in a very similar way to associate_stress_coord with the main difference that the nodes can directly be associated to the corresponding deformation values. Again, the necessary paths where to save the complete files and their headers are defined first and then the filenames are filtered to avoid processing parts of no interest and then an if cycle determines whether to run the rest of the function or not based on the existence of the last file to be generated. If the function runs, a for cycle starts iterating over the remaining files to process and opens each deformation and node coordinate file as a matrix. Their columns are swapped to again take into account ABAQUS' different cartesian reference system. 
 ```python
             with open(os.path.join(deflection_path, csv_deflection_files[csv_file]), 'r') as deflection_read_obj:
@@ -528,7 +527,7 @@ After this, the deformations are transformed into the new geographical reference
             geographical_complete_matrix = rotate_deflections(complete_deflection_matrix)
 ```
 --- 
-##### rotate_deflections
+#### rotate_deflections
 Similarly to the rotate_tensor function, the function starts by opening the current complete file and extracting its displacements and node coordinates, then two matrices are allocated to store the displacement components and magnitude respectively in geographical coordinates.
 ```python
     displacements = complete_deflection_matrix[:, 2:5]
@@ -562,13 +561,101 @@ Both matrices are then saved with or without headers depending on the user's inp
 Back to the main function, the time to run coordinate reader is displayed and the user is then prompted to enter the reference system of the quantities to plot. Once this input has been received, another counter starts for the function call to depth_classifier. 
 
 ---
-#### depth_classifier
+### depth_classifier
+This function is not necessary for plotting anymore, but it has been left as it can be used to  determine the depth ranges to use for plotting. depth_classifier discretizes all the points making up each part (in this case, only EARTH) into different bins and creates a .csv file for each bin whose depth range is in the filename. The dimensions of the file can be checked, and if it is empty or too small the user can decide not to use that depth range. Moreover, the running time of this function, at around 5 minutes, is short compared to other operations to carry out, especially the centroid coordinate calculation.
+
+The function starts with the definition of parameters and headers based on the quantity to process (stresses or deformations), then as always the necessary paths for file storage are defined and also created if necessary. The files are again filtered to only process the parts of interest, then a vector is defined with a preliminary division of values based on the traditional Earth structure and finally the maximum depth over all the part files to process is found.
+```python
+    files_to_classify = filter(lambda a: a != 'to_delete', files_to_classify)
+    maximum_depth = 0
+    earth_data = []
+    for i in range(len(files_to_classify)):
+        with open(os.path.join(files_to_classify_path, files_to_classify[i])) as matrix:
+            data_matrix = matrix.readlines()
+            data_matrix = [line.strip() for line in data_matrix[1:]]
+            data_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in data_matrix]
+            depth_matrix = np.array(data_matrix)
+            maximum_depth = np.amax(depth_matrix[:, -3])
+            earth_data.append(depth_matrix)
+    earth_data = np.concatenate(earth_data, axis=0)
+    if maximum_depth > 2.886e6:
+        layer_depth_km = [410, 660, 2886, maximum_depth / 1000]
+    else:
+        layer_depth_km = [410, 660, maximum_depth / 1000]
+    layer_depth_km = np.array(layer_depth_km)
+    layer_depth = layer_depth_km * 1000
+```
+The user is then prompted to enter whether the function needs to be run or not, and if so, if the number of bins has to eb changed. After this, if the function has to run, a for cycle loops over the files to process and opens them as matrices, appending them to a depth matrix for all parts called large_depth_matrix. Then for each of the values of the depth vector, a matrix is created whose values are smaller than the current depth values extracted from the large_depth_matrix created beforehand. The values in this large_depth_matrix that have been stored are then set to 0 to speed up the search for the next ones.
+```python
+        for i in range(len(layer_depth)):
+            layer_group_indices = [j for j, v in enumerate(large_depth_matrix[:, -3]) if v < layer_depth[i]]
+            layer_matrix = large_depth_matrix[layer_group_indices, :]
+            layer_depth_km_str = str(int(round(layer_depth_km[i])))
+            if headers_on == 1:
+                with open(os.path.join(classified_path, save_name + layer_depth_km_str + '_km.csv'), 'wb') as \
+                        f_write:
+                    writer = csv.writer(f_write)
+                    writer.writerow(discretized_headers)
+                    writer.writerows(layer_matrix)
+            else:
+                with open(os.path.join(classified_path, save_name + layer_depth_km_str + '_km.csv'), 'wb') as \
+                        f_write:
+                    writer = csv.writer(f_write)
+                    writer.writerows(layer_matrix)
+            large_depth_matrix[layer_group_indices, :] = 0
+            large_depth_matrix = large_depth_matrix[~np.all(large_depth_matrix == 0, axis=1)]
+```
+The next step is defining the number of depth bins to use and search for the filenames of the layer matrices that have just been created. A for loop iterates over these matrices and for each of them creates a histogram plot with the depth distribution in the defined number of bins for each layer and saves it, then calls a function called python_discretizer to return a vector of indices for each depth value in the layer matrix.
+
+---
+#### python_discretizer
+This function uses the arange and digitize functions, built in python, to obtain the bin indices for all the depth data of a certain layer. Two cases have to be defined, because for the first depth value the lower boundary for the depth range is 0 km.
+```python
+    if i == 0:
+        min_depth = i
+        max_depth = layer_depth_vector[i]
+        bins = np.arange(min_depth, max_depth + (max_depth - min_depth) / (2*bin_number), (max_depth - min_depth)
+                         / bin_number)
+    else:
+        min_depth = layer_depth_vector[i-1]
+        max_depth = layer_depth_vector[i]
+        bins = np.arange(min_depth, max_depth + (max_depth - min_depth) / (2*bin_number), (max_depth - min_depth)
+                         / bin_number)
+    indices = np.digitize(data, bins)
+```
+After returning the vector of bin indices, the function terminates.
+
+---
+For each of the bins, the elements of the layer data matrix with the same index as the current one are saved in a matrix whose name contains the depth range for that bin.
+```python
+                for j in range(n_bins):
+                    subdivision_matrix = layer_data_matrix[indices == j+1, :]
+                    smaller_edge = str(int(round(bin_edges[j] / 1000)))
+                    if j == n_bins-1:
+                        larger_edge = str(int(round(bin_edges[-1] / 1000)))
+                    else:
+                        larger_edge = str(int(round(bin_edges[j+1] / 1000)))
+                    if headers_on == 1:
+                        with open(os.path.join(subclassified_path, matrix_to_save_part +
+                                        str(re.search(r'\d+', layer_values_names[i]).group(0)) + '_km_bin_' + str(j+1) +
+                                        '_edges_' + smaller_edge + '_' + larger_edge + '.csv'), 'wb') as f_write:
+                            writer = csv.writer(f_write)
+                            writer.writerow(discretized_headers)
+                            writer.writerows(subdivision_matrix)
+                    else:
+                        with open(os.path.join(subclassified_path, matrix_to_save_part +
+                                        str(re.search(r'\d+', layer_values_names[i]).group(0)) + '_km_bin_' + str(j+1) +
+                                        '_edges_' + smaller_edge + '_' + larger_edge + '.csv'), 'wb') as f_write:
+                            writer = csv.writer(f_write)
+                            writer.writerows(subdivision_matrix)
+```
+The same operations of histogram generation and bin .csv files is also carried out on the large_depth_matrix defined above, and after this operation the function terminates.
 
 ---
 Once this has been done, the time to run depth_classifier is displayed and the latitude, longitude and depth ranges to use for successive plots are defined. Then, another function called element_tracker is called. Its main importance resides in the generation of tables tracking the element with highest stress in the ranges defined above to check with more detail what is happening to the model.
 
 ---
-#### element_tracker
+### element_tracker
 This function creates a .csv table containing the stress and viscosity value for the element with the highest Mises stress in the latitude, longitude and depth ranges initialized above. The function begins by extracting the extremes of these ranges and the table headers, then the user is asked whether the function has to be run or not. It is recommended to do this only after processing a sufficiently large amount of stress iterations. 
 ```python
     fles_to_check = []
@@ -683,7 +770,7 @@ After the for cycle over every file to process is completed, element_table with 
 The last function to be called from this main is called matlab_variables_writer, which generates a .txt file containing all the information that MATLAB needs to find the data to plot and what kind of data it is.
 
 ---
-#### matlab_variables_writer
+### matlab_variables_writer
 This last function to run writes all the handles that MATLAB need s to generate plots into a .txt file that is afterwards read by the MATLAB main function. This operation is very quick as every variable to write has already been defined somewhere in the main, so all the variables are simply concatenated in a long list whose elements are written one for each line after being converted to strings if necessary. This file is then closed and the function terminates. 
 
 ```python

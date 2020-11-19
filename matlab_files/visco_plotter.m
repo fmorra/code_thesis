@@ -14,13 +14,12 @@ visco_diff_path = [diff_matrix_path '\' quantity];
 if ~exist(visco_diff_path, 'dir')
     mkdir(visco_diff_path)
 end
+e_file_name = 'e.dat';
+viscosity_figures_path = [report_path '\viscosity_plots'];
+if ~exist(viscosity_figures_path, 'dir')
+    mkdir (viscosity_figures_path)
+end
 for i=1:length(parts_to_plot)
-    e_file_name = 'e.dat';
-    viscosity_figures_path = [report_path '\viscosity_plots'];
-    if ~exist(viscosity_figures_path, 'dir')
-        mkdir (viscosity_figures_path)
-    end
-    
     % for i = 1:length(iteration_subfolders)
     iter_path = python_variables_base_path;
     e_path = [iter_path '\' e_file_name];
@@ -124,10 +123,10 @@ for i=1:length(parts_to_plot)
     writecell(matrix_for_difference_wheaders,[visco_diff_path '\Iteration_' iteration '_step_' step ...
         '_cycle_' cycle '_' num2str(min_depth) '_' num2str(max_depth) '_km.csv']);
 end
-for i=1:length(parts_to_plot)
-    B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
-        min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon);
-end
+% for i=1:length(parts_to_plot)
+%     B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
+%         min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon);
+% end
 
 end
 

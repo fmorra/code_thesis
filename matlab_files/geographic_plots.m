@@ -107,10 +107,6 @@ while while_check == 1
         disp('Incorrect input, enter 1 for plots and 0 to skip this step.');
     end
 end
- 
-% Differentiate between reading stresses and deflections, we need to
-% modify a series of parameters realted to the generation and storage
-% of those plots.
 
 diff_matrix_path = [python_base_path '\run_' run '\difference_matrices_plots\matrices'];
 if ~exist(diff_matrix_path, 'dir')
@@ -125,14 +121,9 @@ if depths_to_plot(1) > depths_to_plot (2)
     depths_to_plot([1 2]) = depths_to_plot([2 1]);
 end
 if plots_bool == 1
-    %     bins_input = input('Enter 0 to work with depth values, 1 for bins:\n');
-    %     if bins_input == 1
-    %         bin_plotter(sd_input,plots_bool,report_path);
-    %     else
     depth_searcher(sd_input,coordinate_system,complete_matrices_path,...
         files_to_classify,figures_path,diff_matrix_path,iteration,step,cycle,...
         min_lat,max_lat,min_lon,max_lon,depths_to_plot);
-    %     end
 end
 
 %% Viscosity 
