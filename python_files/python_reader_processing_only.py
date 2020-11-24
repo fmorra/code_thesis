@@ -26,9 +26,9 @@ from element_tracker import *
 # name of the e.dat file and the Earth.dat file containing the node and element information for the entire model, and
 # the run, iteration, step, cycle numbers together with the report filenames.
 program_start_time = time.time()
-run = '18'
+run = '23'
 iteration = 1
-step = 0
+step = 1
 cycle = 1
 if not isinstance(run, str):
     run = str(run)

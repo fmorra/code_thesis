@@ -38,7 +38,7 @@ C
       DIMENSION DECRA(5),DESWA(5),STATEV(*),PREDEF(*),DPRED(*),
      1 TIME(2),COORDS(*),EC(2),ESW(2)
 C
-      AN = 4
+      AN = 3.5
       ANM1 = 2.5
 
 	  ALIN = Bdiff(NOEL)

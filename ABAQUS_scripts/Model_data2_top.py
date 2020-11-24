@@ -7,7 +7,7 @@ Dir=r"/home/fabri/Earth_model_abaqus_SLE0/"
 Dir2 = r"/home/fabri/Earth_model_abaqus_SLE0/parallel_run_scripts_2"
 sys.path.insert(0,Dir2)
 sys.path.insert(1,Dir)
-run_number = 21
+run_number = 22
 dir_name = "results_run_" + str(run_number)
 complete_dir = os.path.join(Dir,dir_name)
 if not os.path.exists(complete_dir):

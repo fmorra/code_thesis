@@ -50,6 +50,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
     else:
         print 'Associating deflection components to corresponding nodes...'
         # Iterate over the files containing the deflections for each part
+        large_geographical_complete_file = []
         for csv_file in range(len(csv_deflection_files)):
             print 'Processing the following deflection file: ', csv_deflection_files[csv_file]
             # Open the file containing the deflections, transform it into an array for easy handling and swap the y and
@@ -91,7 +92,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                                                           individual_coordinate_matrix[:, 1:]))
             geographical_complete_matrix = rotate_deflections(complete_deflection_matrix)
             # large_complete_file.append(complete_deflection_matrix)
-            # large_geographical_complete_file.append(geographical_complete_matrix)
+            large_geographical_complete_file.append(geographical_complete_matrix)
 
             earth_radius = 6371000
             depths = np.zeros((len(complete_deflection_matrix), 1))
@@ -106,6 +107,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
             [lat, lon] = cart2geo(cartesian_coordinates)
             complete_deflection_matrix = np.column_stack((complete_deflection_matrix, lat, lon))
             geographical_complete_matrix = np.column_stack((geographical_complete_matrix, lat, lon))
+            large_geographical_complete_file.append(geographical_complete_matrix)
             # Save the complete matrices for each part with or without headers
             if headers_on == 1:
                 with open(os.path.join(complete_deflection_path, 'Complete_file_' + csv_deflection_files[csv_file]),
@@ -113,7 +115,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                     writer = csv.writer(f_write)
                     writer.writerow(complete_headers)
                     writer.writerows(complete_deflection_matrix)
-                with open(os.path.join(geographical_complete_deflection_path, 'Geographical_complete_file_' +
+                with open(os.path.join(geographical_complete_deflection_path, 'Geographical_Complete_file_' +
                                        csv_deflection_files[csv_file]), 'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerow(complete_headers)
@@ -127,4 +129,15 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                                        csv_deflection_files[csv_file]), 'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerows(geographical_complete_matrix)
+        if headers_on == 1:
+            with open(os.path.join(geographical_complete_deflection_path,
+                                   'Large_complete_geographical_deflection_file.csv'), 'wb') as f_write:
+                writer = csv.writer(f_write)
+                writer.writerow(complete_headers)
+                writer.writerows(large_geographical_complete_file)
+            with open(os.path.join(geographical_complete_deflection_path,
+                                   'Large_complete_geographical_deflection_file.csv'), 'wb') as f_write:
+                writer = csv.writer(f_write)
+                writer.writerow(complete_headers)
+                writer.writerows(large_geographical_complete_file)
     return complete_deflection_path, geographical_complete_deflection_path

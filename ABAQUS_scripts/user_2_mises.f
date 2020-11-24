@@ -12,7 +12,7 @@ C
 C
        if (LOP.EQ.0) then
 
-       filename='/home/fabri/Earth_model_abaqus_SLE0/results_run_21/e.dat'
+       filename='/home/fabri/Earth_model_abaqus_SLE0/results_run_22/e.dat'
            open(16,file=filename)
 	     do ii=1,218705
 	       read(16,*) e,Bdiff(ii),Bdisl(ii),QMISES(ii)
@@ -38,7 +38,7 @@ C
       DIMENSION DECRA(5),DESWA(5),STATEV(*),PREDEF(*),DPRED(*),
      1 TIME(2),COORDS(*),EC(2),ESW(2)
 C
-      AN = 4
+      AN = 3.5
       ANM1 = 2.5
 
 	  ALIN = Bdiff(NOEL)

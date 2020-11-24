@@ -18,13 +18,13 @@ for i = 1:length(dat_names)
     lat_vector_plot = flip(lat_vector);
     diff_matrix = my_file - bas_file;
     diff_matrix_percent = (diff_matrix./bas_file)*100;
-%     for  j = 1:size(diff_matrix_percent,1)
-%         for k = 1:size(diff_matrix_percent,2)
-%             if abs(diff_matrix_percent(j,k)) > 1
-%                 diff_matrix_percent(j,k) = 0;
-%             end
-%         end
-%     end
+    for  j = 1:size(diff_matrix_percent,1)
+        for k = 1:size(diff_matrix_percent,2)
+            if abs(diff_matrix_percent(j,k)) > 1
+                diff_matrix_percent(j,k) = 0;
+            end
+        end
+    end
     
     figure(i)
     surf(lon_vector_plot,lat_vector_plot,diff_matrix_percent, 'edgecolor', 'none')
@@ -34,9 +34,11 @@ for i = 1:length(dat_names)
     set(gca, 'Xdir', 'reverse')
     set(gca, 'Ydir', 'reverse')
     xlabel('Longitude (deg)'); ylabel('Latitude(deg)');
+    title('Percentage difference');
     view(180,90);
-    colorbar;
+    h = colorbar('v');
+    set(get(h,'ylabel'),'string','%')
     grid on;
-    saveas(gcf,['C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files' dat_names{i} '.png']);
+    saveas(gcf,['C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files\' dat_names{i}(1:end-4) '.png']);
     
 end

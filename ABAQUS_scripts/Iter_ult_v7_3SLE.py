@@ -76,13 +76,14 @@ while Num<=Res:   # We do not give a convergence condition because we know conve
         mdb.jobs[Model_name].waitForCompletion()
         with open('Iteration_' + str(Num) + '_job_completion_certificate.txt', 'wb') as file:
             file.write('Job completed for iteration ' + str(Num))
-        if Num == 1:
-            if not os.path.exists(os.path.join(complete_dir, 'base_files', Model_name + '.odb' )):
-                shutil.copyfile(os.path.join(complete_dir, Model_name + '.odb' ), os.path.join(complete_dir, 'base_files', Model_name + '.odb' ))
+##        if Num == 1:
+##            os.mkdir(complete_dir, 'base_files')
+##            if not os.path.exists(os.path.join(complete_dir, 'base_files', Model_name + '.odb' )):
+##                os.mkdir(os.path.join(complete_dir, 'base_files')
+##                shutil.copyfile(os.path.join(complete_dir, Model_name + '.odb' ), os.path.join(complete_dir, 'base_files', Model_name + '.odb' ))
 ##            if os.path.exists(os.path.join(complete_dir, 'base_files')):
 ##                os.mkdir(os.path.join(complete_dir, 'base_files'))
         print 'Finish FEM\n'
-    
     ## This part is usualy skipped
     if initialize_interpol_lists==1 and Num==1:
         print 'Start initializing interpolation lists\n'
@@ -193,7 +194,6 @@ while Num<=Res:   # We do not give a convergence condition because we know conve
         session.odbs[Model_name+'.odb'].close()
         with open('Iteration_' + str(Num) + '_preliminary_operations_completion_certificate.txt','wb') as file:
             file.write('Preliminary operations on the odb for iteration number ' + str(Num) + ' carried out.')
-    stop
     
     #################################################################################################################
     ####################################New part added: stress pairing at each timestep##############################
@@ -857,7 +857,7 @@ while Num<=Res:   # We do not give a convergence condition because we know conve
             
             # Define the new stress to couple 
             
-            new_stress_test = 100000 #0.1MPa
+            new_stress_test = 10000 #0.01MPa
             if not os.path.exists(coupled_stress_folder):
                 os.mkdir(coupled_stress_folder)
      

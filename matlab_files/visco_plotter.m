@@ -1,7 +1,7 @@
 function [visco_diff_path] = visco_plotter(python_variables_base_path,coordinate_system, ...
     complete_matrices_path,report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
     iteration,step,cycle,diff_matrix_path)
-
+close all; clc;
 disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
 parts_to_plot = {'EARTH'};
 visco_strain_input = input('Enter 0 to plot the viscosity, 1 to plot the strain rate:\n');

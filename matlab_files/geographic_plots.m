@@ -18,13 +18,14 @@ close all; clear all; clc;
 %set(0,'DefaultFigureVisible','off')
 %% Stress and deflection
 % 'Mises S11 S12'
+% 'Magnitude U2'
 python_base_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python';
-run = '17';
+run = '21';
 iteration = '1';
 step = '0';
 cycle = '1';
 coordinate_system = 'geographical'; % cartesian or geographical
-quantity = 'stresses'; %stresses or deflections
+quantity = 'deflections'; %stresses or deflections
 % python_variables_path = [python_variables_base_path '\run_' run '\iteration_' iteration];
 python_variables_path = [python_base_path '\run_' run '\Iteration_' iteration...
     '\step_' step '\cycle_' cycle '_reports'];
