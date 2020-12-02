@@ -62,11 +62,10 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                 individual_deflection_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in
                                                 individual_deflection_matrix]
                 individual_deflection_matrix = np.array(individual_deflection_matrix)
-                individual_deflection_matrix[:, 2], individual_deflection_matrix[:, 3] = \
-                    individual_deflection_matrix[:, 3], individual_deflection_matrix[:, 2].copy()
+                individual_deflection_matrix[:, 2], individual_deflection_matrix[:, 4] = \
+                    individual_deflection_matrix[:, 4], individual_deflection_matrix[:, 2].copy()
                 individual_deflection_matrix[:, 3], individual_deflection_matrix[:, 4] = \
                     individual_deflection_matrix[:, 4], individual_deflection_matrix[:, 3].copy()
-
             # Open the file containing the coordinates, transform it into an array for easy handling and swap the Y and
             # Z columns first and then the X and Y columns to take into account the different reference system that
             # ABAQUS uses. We can perform the swap here for both the deformation tensor and coordinate vector as, unlike
@@ -81,8 +80,8 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                                                 individual_coordinate_matrix]
                 # Swap coordinates
                 individual_coordinate_matrix = np.array(individual_coordinate_matrix)
-                individual_coordinate_matrix[:, 1], individual_coordinate_matrix[:, 2] = \
-                    individual_coordinate_matrix[:, 2], individual_coordinate_matrix[:, 1].copy()
+                individual_coordinate_matrix[:, 1], individual_coordinate_matrix[:, 3] = \
+                    individual_coordinate_matrix[:, 3], individual_coordinate_matrix[:, 1].copy()
                 individual_coordinate_matrix[:, 2], individual_coordinate_matrix[:, 3] = \
                     individual_coordinate_matrix[:, 3], individual_coordinate_matrix[:, 2].copy()
 
@@ -125,7 +124,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                           'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerows(complete_deflection_matrix)
-                with open(os.path.join(geographical_complete_deflection_path, 'Geographical_complete_file_',
+                with open(os.path.join(geographical_complete_deflection_path, 'Geographical_Complete_file_',
                                        csv_deflection_files[csv_file]), 'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerows(geographical_complete_matrix)

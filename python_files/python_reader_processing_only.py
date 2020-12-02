@@ -26,9 +26,9 @@ from element_tracker import *
 # name of the e.dat file and the Earth.dat file containing the node and element information for the entire model, and
 # the run, iteration, step, cycle numbers together with the report filenames.
 program_start_time = time.time()
-run = '23'
+run = '22'
 iteration = 1
-step = 1
+step = 0
 cycle = 1
 if not isinstance(run, str):
     run = str(run)
@@ -89,12 +89,13 @@ if not os.path.exists(deflection_processing_path):
 # Choose whether to save files with headers or not and  choose what quantity to work with
 headers_on = 1
 check_1 = 1
-while check_1 == 1:
-    sd_input = input('Enter 0 to work with stress components, 1 for the deflections: \n')
-    if sd_input == 0 or sd_input == 1:
-        check_1 = 0
-    else:
-        print('Incorrect input, select either 1 or 0. \n')
+sd_input = 1
+# while check_1 == 1:
+#     sd_input = input('Enter 0 to work with stress components, 1 for the deflections: \n')
+#     if sd_input == 0 or sd_input == 1:
+#         check_1 = 0
+#     else:
+#         print('Incorrect input, select either 1 or 0. \n')
 
 # Call the function to create stress and deflection files containing the components together with the centroid or node
 # coordinates, their depth and latitude and longitude
@@ -111,9 +112,10 @@ else:
           'is ', str(int(round(end_time_coordinate_reader))), ' seconds'
 # Bin the data into different depth bins based on whether we want to work with geographical or cartesian components
 check_2 = 1
+components_to_plot = 0
 while check_2 == 1:
-    components_to_plot = input('Enter 0 to work with cartesian components, 1 to work with '
-                               'geographical ones: \n')
+    # components_to_plot = input('Enter 0 to work with cartesian components, 1 to work with '
+    #                            'geographical ones: \n')
     if components_to_plot == 0 or components_to_plot == 1:
         if components_to_plot == 0:
             components_to_plot = 'cartesian'

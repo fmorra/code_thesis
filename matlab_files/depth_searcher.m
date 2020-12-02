@@ -62,7 +62,7 @@ for i=1:length(parts_to_plot)
         matrix_to_read = readmatrix([complete_matrices_path '\Complete_file_'...
             parts_to_plot{i} '.csv']);
     else
-        matrix_to_read = readmatrix([complete_matrices_path '\geographical_complete_file_'...
+        matrix_to_read = readmatrix([complete_matrices_path '\Geographical_complete_file_'...
             parts_to_plot{i} '.csv']);
     end
     depth = matrix_to_read(:,end-2)/1e3;
@@ -81,6 +81,7 @@ for i=1:length(parts_to_plot)
         matrix_for_difference(:,j) = plot_variable;
         matrix_for_difference(:,end-1) = lat(data_points_indices);
         matrix_for_difference(:,end) = lon(data_points_indices);
+        
         [Z, refvec] = geoloc2grid(lat(data_points_indices),wrapTo360(lon(data_points_indices)),...
             plot_variable,0.5);
         load coastlines;

@@ -27,7 +27,7 @@ def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processin
     else:
         print 'The time spent to extract the node coordinates for each part is ', str(int(round(end_time_nodes))), \
             ' seconds'
-    stress_part_values = os.path.join(stress_processing_path, 'Stress_Part_Values')
+    stress_part_values = stress_processing_path
     if sd_input == 0:
         start_time_elements = time.time()
         individual_element_paths = elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,

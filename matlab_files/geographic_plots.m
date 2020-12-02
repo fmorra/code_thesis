@@ -18,7 +18,7 @@ close all; clear all; clc;
 %set(0,'DefaultFigureVisible','off')
 %% Stress and deflection
 % 'Mises S11 S12'
-% 'Magnitude U2'
+% 'Magnitude U1 U2 U3'
 python_base_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python';
 run = '21';
 iteration = '1';
@@ -76,7 +76,8 @@ while ~feof(opened_file)
     if strcmp(s, 'cartesian')== 1 || strcmp(s, 'geographical')== 1
         components_to_plot = s;
     end
-    if contains(s, 'Complete') == 1 || contains(s, 'geographical_complete')
+    % if contains(s, 'Complete') == 1 || contains(s, 'geographical_complete')
+    if contains(s, 'omplete') == 1 
         complete_matrices_path = s;
     end
     if abs(str2double(s)) > 1 && ~isnan(str2double(s))
@@ -118,6 +119,13 @@ max_lat = plotting_params(2);
 min_lon = plotting_params(3);
 max_lon = plotting_params(4);
 depths_to_plot = [plotting_params(5) plotting_params(6)]; 
+if strcmp(quantity, 'deflections') == 1
+    min_lat = -90;
+    max_lat = -65;
+    min_lon = -180;
+    max_lon = 180;
+    depths_to_plot = [100 150];
+end
 if depths_to_plot(1) > depths_to_plot (2)
     depths_to_plot([1 2]) = depths_to_plot([2 1]);
 end

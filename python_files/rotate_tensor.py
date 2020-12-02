@@ -41,33 +41,50 @@ def rotate_tensor(part_matrix, geographical_centroids_files_path, geographical_c
 
             # Define transformation cosines and then create the transformation matrix
             centroid_coords = complete_file[line, 8:]
-            R_3D = np.sqrt(centroid_coords[0] ** 2 + centroid_coords[1] ** 2 + centroid_coords[2] ** 2)
-            R_azimuth = np.sqrt(centroid_coords[0] ** 2 + centroid_coords[1] ** 2)
-            cos_lon = centroid_coords[0] / R_azimuth
-            sin_lon = centroid_coords[1] / R_azimuth
-            cos_lat = R_azimuth / R_3D
-            sin_lat = centroid_coords[2] / R_3D
-            T = np.zeros((3, 3))
-
-            T[0, 0] = cos_lon * cos_lat
-            T[1, 0] = cos_lon * sin_lat
-            T[2, 0] = -sin_lon
-            T[0, 1] = sin_lon * cos_lat
-            T[1, 1] = sin_lon * sin_lat
-            T[2, 1] = cos_lon
-            T[0, 2] = sin_lat
-            T[1, 2] = -cos_lat
-            T[2, 2] = 0.0
+            r_3d = np.sqrt(centroid_coords[0] ** 2 + centroid_coords[1] ** 2 + centroid_coords[2] ** 2)
+            r_azimuth = np.sqrt(centroid_coords[0] ** 2 + centroid_coords[1] ** 2)
+            cos_theta = centroid_coords[0] / r_azimuth
+            sin_theta = centroid_coords[1] / r_azimuth
+            cos_phi = r_azimuth / r_3d
+            sin_phi = centroid_coords[2] / r_3d
+        
+            # T = np.zeros((3, 3))
+            # T[0, 0] = cos_lon * cos_lat
+            # T[1, 0] = cos_lon * sin_lat
+            # T[2, 0] = -sin_lon
+            # T[0, 1] = sin_lon * cos_lat
+            # T[1, 1] = sin_lon * sin_lat
+            # T[2, 1] = cos_lon
+            # T[0, 2] = sin_lat
+            # T[1, 2] = -cos_lat
+            # T[2, 2] = 0.0
+            transformation_tensor = np.zeros((3, 3))
+            unit_x = np.array([-sin_theta, -cos_theta * sin_phi, cos_theta * cos_phi])
+            unit_y = np.array([cos_theta, -sin_theta * sin_phi, sin_theta * cos_phi])
+            unit_z = np.array([0, cos_phi, sin_phi])
+            unit_theta = np.array([-sin_theta, cos_theta, 0])
+            unit_phi = np.array([-cos_theta * sin_phi, -sin_theta * sin_phi, cos_phi])
+            unit_r = np.array([cos_theta * cos_phi, sin_theta * cos_phi, sin_phi])
+            transformation_tensor[0, 0] = np.dot(np.transpose(unit_theta), unit_x)
+            transformation_tensor[1, 0] = np.dot(np.transpose(unit_phi), unit_x)
+            transformation_tensor[2, 0] = np.dot(np.transpose(unit_r), unit_x)
+            transformation_tensor[0, 1] = np.dot(np.transpose(unit_theta), unit_y)
+            transformation_tensor[1, 1] = np.dot(np.transpose(unit_phi), unit_y)
+            transformation_tensor[2, 1] = np.dot(np.transpose(unit_r), unit_y)
+            transformation_tensor[0, 2] = np.dot(np.transpose(unit_theta), unit_z)
+            transformation_tensor[1, 2] = np.dot(np.transpose(unit_phi), unit_z)
+            transformation_tensor[2, 2] = np.dot(np.transpose(unit_r), unit_z)
 
             # Save the geographical components for each element in a line of the file allocated previously
-            S_geographical = T.dot(S).dot(np.transpose(T))
+            # geographic_tensor = np.dot(transformation_tensor, np.dot(S, np.transpose(transformation_tensor)))
+            geographic_tensor = transformation_tensor.dot(S).dot(np.transpose(transformation_tensor))
             geographical_components[line, 0] = complete_file[line, 1]
-            geographical_components[line, 1] = S_geographical[0, 0]
-            geographical_components[line, 2] = S_geographical[1, 1]
-            geographical_components[line, 3] = S_geographical[2, 2]
-            geographical_components[line, 4] = S_geographical[0, 1]
-            geographical_components[line, 5] = S_geographical[0, 2]
-            geographical_components[line, 6] = S_geographical[1, 2]
+            geographical_components[line, 1] = geographic_tensor[0, 0]
+            geographical_components[line, 2] = geographic_tensor[1, 1]
+            geographical_components[line, 3] = geographic_tensor[2, 2]
+            geographical_components[line, 4] = geographic_tensor[0, 1]
+            geographical_components[line, 5] = geographic_tensor[0, 2]
+            geographical_components[line, 6] = geographic_tensor[1, 2]
 
     # Define the complete files and their labels
     labels_complete_file = complete_file[:, 0]

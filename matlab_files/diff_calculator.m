@@ -1,11 +1,11 @@
 function [] = diff_calculator(diff_matrix_path_incomplete,min_lat,max_lat,min_lon,max_lon)
 % Calculate the differences between two similar plots, where possible.
-% [1 0 1 225 230]
-% [1 0 2 225 230]
+% [1 0 1 145 150]
+% [1 0 2 145 150]
 
 visco_choice = 0;
 if visco_choice == 0
-    stress_deflection_input = 0;
+    stress_deflection_input = 1;
     ref_system_input = 1;
     if stress_deflection_input == 0
         quantity = 'stresses';

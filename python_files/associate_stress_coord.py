@@ -135,9 +135,9 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
 
             centroid_coord[:, 1], centroid_coord[:, 3] = centroid_coord[:, 3].copy(), centroid_coord[:, 1].copy()
             centroid_coord[:, 2], centroid_coord[:, 3] = centroid_coord[:, 3].copy(), centroid_coord[:, 2].copy()
-            part_matrix[:, 2], part_matrix[:, 3] = part_matrix[:, 3].copy(), part_matrix[:, 2].copy()
+            part_matrix[:, 2], part_matrix[:, 4] = part_matrix[:, 4].copy(), part_matrix[:, 2].copy()
             part_matrix[:, 3], part_matrix[:, 4] = part_matrix[:, 4].copy(), part_matrix[:, 3].copy()
-            part_matrix[:, 6], part_matrix[:, 7] = part_matrix[:, 7].copy(), part_matrix[:, 6].copy()
+            part_matrix[:, 5], part_matrix[:, 7] = part_matrix[:, 7].copy(), part_matrix[:, 5].copy()
             part_matrix[:, 5], part_matrix[:, 6] = part_matrix[:, 6].copy(), part_matrix[:, 5].copy()
 
             # Create the complete file for each part and region containing the stresses and centroid coordinates,
