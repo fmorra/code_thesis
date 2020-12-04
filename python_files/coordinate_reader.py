@@ -39,11 +39,9 @@ def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processin
             print 'The time spent to extract the element nodes for each part is ', str(int(round(end_time_elements))),\
                 ' seconds'
         start_time_complete_stresses = time.time()
-        centroid_files_path, complete_files_path, geographical_centroids_files_path, geographical_components_files_path, \
-            geographical_complete_files_path = associate_stress_coord(individual_element_paths, stress_part_values,
-                                                                      large_node_matrix_path, headers_on,
-                                                                      stress_matrices_path, dat_name,
-                                                                      coupled_stress_folder)
+        centroid_files_path, complete_files_path, geographical_complete_files_path = \
+            associate_stress_coord(individual_element_paths, stress_part_values, large_node_matrix_path, headers_on,
+                                   stress_matrices_path, dat_name, coupled_stress_folder)
         end_time_complete_stresses = time.time() - start_time_complete_stresses
         if end_time_complete_stresses < 1:
             print 'The time spent to associate the stresses to each corresponding element for each part is less than ' \

@@ -12,6 +12,8 @@ dat_names = ...
 for i = 1:length(dat_names)
     my_file = importdata([my_files_path '\' dat_names{i}]);
     bas_file = importdata([bas_files_path '\' dat_names{i}]);
+    disp([my_files_path '\' dat_names{i}])
+    disp([bas_files_path '\' dat_names{i}])
     lat_vector = linspace(-90,90,size(my_file,1));
     lon_vector = linspace(0,360,size(my_file,2));
     lon_vector_plot = flip(lon_vector - 180);
@@ -20,8 +22,8 @@ for i = 1:length(dat_names)
     diff_matrix_percent = (diff_matrix./bas_file)*100;
     for  j = 1:size(diff_matrix_percent,1)
         for k = 1:size(diff_matrix_percent,2)
-            if abs(diff_matrix_percent(j,k)) > 1
-                diff_matrix_percent(j,k) = 0;
+            if abs(diff_matrix_percent(j,k)) > 5
+                diff_matrix_percent(j,k) = NaN;
             end
         end
     end
@@ -34,8 +36,8 @@ for i = 1:length(dat_names)
     set(gca, 'Xdir', 'reverse')
     set(gca, 'Ydir', 'reverse')
     xlabel('Longitude (deg)'); ylabel('Latitude(deg)');
-    title('Percentage difference');
-    view(180,90);
+    title(['Percentage difference for ' dat_names{i}], 'Interpreter', 'none');
+    %view(180,90);
     h = colorbar('v');
     set(get(h,'ylabel'),'string','%')
     grid on;

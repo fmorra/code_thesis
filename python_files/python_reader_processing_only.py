@@ -26,10 +26,10 @@ from element_tracker import *
 # name of the e.dat file and the Earth.dat file containing the node and element information for the entire model, and
 # the run, iteration, step, cycle numbers together with the report filenames.
 program_start_time = time.time()
-run = '22'
+run = '26'
 iteration = 1
 step = 0
-cycle = 1
+cycle = 2
 if not isinstance(run, str):
     run = str(run)
 stress_rpt_name = 'abaqus_run_' + run + '.rpt'
@@ -89,7 +89,7 @@ if not os.path.exists(deflection_processing_path):
 # Choose whether to save files with headers or not and  choose what quantity to work with
 headers_on = 1
 check_1 = 1
-sd_input = 1
+sd_input = 0
 # while check_1 == 1:
 #     sd_input = input('Enter 0 to work with stress components, 1 for the deflections: \n')
 #     if sd_input == 0 or sd_input == 1:
@@ -112,7 +112,7 @@ else:
           'is ', str(int(round(end_time_coordinate_reader))), ' seconds'
 # Bin the data into different depth bins based on whether we want to work with geographical or cartesian components
 check_2 = 1
-components_to_plot = 0
+components_to_plot = 1
 while check_2 == 1:
     # components_to_plot = input('Enter 0 to work with cartesian components, 1 to work with '
     #                            'geographical ones: \n')
@@ -126,9 +126,9 @@ while check_2 == 1:
         print('incorrect input, select either "cartesian" or "geographical". \n')
 
 depth_start_time = time.time()
-classified_path, files_to_classify, maximum_depth, fig_counter = \
-    depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot,
-                     complete_files_path, geographical_complete_files_path, headers_on, common_files_path)
+classified_path, files_to_classify = depth_classifier(sd_input, deflection_processing_path, individual_path,
+                                                      components_to_plot, complete_files_path,
+                                                      geographical_complete_files_path, headers_on)
 depth_end_time = time.time() - depth_start_time
 print 'The time spent to run depth discretization algorithm is: ', str(int(round(depth_end_time))), ' seconds'
 

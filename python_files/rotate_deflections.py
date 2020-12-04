@@ -75,7 +75,7 @@ def rotate_deflections(complete_deflection_matrix):
                             geographical_displacements[i, 2] ** 2)
     # Create and return the complete matrix for this part containing the geographical displacement components
     complete_geographical_displacements = np.column_stack((U_magn, geographical_displacements))
-    geographical_complete_matrix = np.column_stack((complete_deflection_matrix[:, 0], complete_geographical_displacements,
-                                                 node_coordinates))
+    geographical_complete_matrix = np.column_stack((complete_deflection_matrix[:, 0],
+                                                    complete_geographical_displacements,  node_coordinates))
 
     return geographical_complete_matrix

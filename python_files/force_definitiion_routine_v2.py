@@ -4,6 +4,7 @@ import time
 import pdb
 import numpy as np
 import math as m
+import csv
 from stress_report_reader import *
 from deflection_report_reader import *
 from coordinate_reader import *
@@ -13,7 +14,7 @@ from matlab_variables_writer import *
 # General parameters: based on how the files have been produced in ABAQUS, create the name of the dat and rpt files by
 # modifying the run number
 program_start_time = time.time()
-run = '11'
+run = '22'
 iteration = 1
 step = 0
 cycle = 2

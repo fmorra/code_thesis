@@ -1,5 +1,4 @@
-def rotate_tensor(part_matrix, geographical_centroids_files_path, geographical_components_files_path,
-                  geographical_complete_files_path, headers_on, complete_headers, centroid_headers,
+def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                   complete_individual_path, part_file):
 
     # This function converts the stress components from catesian to spherica, leaving the coordinates as cartesian.

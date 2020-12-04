@@ -9,9 +9,9 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
     # Define the relevant paths and if necessary create relevant directories
     large_node_matrix_path = os.path.join(common_files_path, 'Large_Node_Matrix.csv')
     individual_path = os.path.join(common_files_path, 'Individual_Part_Values')
-    individual_node_path = os.path.join(individual_path, 'Nodes')
-    if not os.path.exists(individual_node_path):
-        os.makedirs(individual_node_path)
+    # individual_node_path = os.path.join(individual_path, 'Nodes')
+    if not os.path.exists(individual_path):
+        os.makedirs(individual_path)
 
     # Define node labels and initialize matrix with all node data
     headers = ['Label', 'X', 'Y', 'Z']
@@ -51,13 +51,13 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
 
                 # Save the file for every single part differentiating between headers or not
                 if headers_on == 1:
-                    with open(os.path.join(individual_node_path, 'Nodes_Part_' + file_identifiers[i] + ".csv"), 'wb') \
+                    with open(os.path.join(individual_path, 'Nodes_Part_' + file_identifiers[i] + ".csv"), 'wb') \
                             as f_write:
                         writer = csv.writer(f_write)
                         writer.writerow(headers)
                         writer.writerows(individual_matrix)
                 else:
-                    with open(os.path.join(individual_node_path, 'Nodes_Part_' + file_identifiers[i] + ".csv"), 'wb') \
+                    with open(os.path.join(individual_path, 'Nodes_Part_' + file_identifiers[i] + ".csv"), 'wb') \
                             as f_write:
                         writer = csv.writer(f_write)
                         writer.writerows(individual_matrix)

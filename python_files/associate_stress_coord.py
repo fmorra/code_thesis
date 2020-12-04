@@ -27,12 +27,6 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     complete_files_path = os.path.join(stress_part_values, 'Complete_Files')
     if not os.path.exists(complete_files_path):
         os.mkdir(complete_files_path)
-    geographical_centroids_files_path = os.path.join(stress_part_values, 'Geographical_Centroids')
-    if not os.path.exists(geographical_centroids_files_path):
-        os.mkdir(geographical_centroids_files_path)
-    geographical_components_files_path = os.path.join(stress_part_values, 'Geographical_Components')
-    if not os.path.exists(geographical_components_files_path):
-        os.mkdir(geographical_components_files_path)
     geographical_complete_files_path = os.path.join(stress_part_values, 'Geographical_Complete_Files')
     if not os.path.exists(geographical_complete_files_path):
         os.mkdir(geographical_complete_files_path)
@@ -52,7 +46,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     # Decide whether to run the main algorithm or not based on the presence of the last file to be created
     # if os.path.isfile(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + coord_file[0:5] +
     #                                                               '.csv')):
-    if os.path.isfile(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_EARTH.csv')):
+    if os.path.isfile(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt')):
         print 'The files containing centroid stresses associated to the relative coordinates already exist, ' \
               'moving on to classification of stress values based on depth.'
     else:
@@ -182,8 +176,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             # csv_stress_files.pop(0)
 
             # Calculate and save the geographical stress components
-            rotate_tensor(part_matrix, geographical_centroids_files_path, geographical_components_files_path,
-                          geographical_complete_files_path, headers_on, complete_headers, centroid_headers,
+            rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                           complete_individual_path, part_file)
 
     for csv_file in range(len(csv_stress_files)):
@@ -209,8 +202,9 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                     writer = csv.writer(f_write)
                     writer.writerow(complete_headers)
                     writer.writerows(final_coupled_matrix)
+    with open(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt'), 'wb') as f_write:
+        f_write.write('Stress association completed.')
 
-    return centroid_files_path, complete_files_path, geographical_centroids_files_path, geographical_components_files_path, \
-        geographical_complete_files_path
+    return centroid_files_path, complete_files_path, geographical_complete_files_path
 
 

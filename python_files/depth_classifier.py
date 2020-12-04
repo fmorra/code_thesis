@@ -10,7 +10,7 @@ import pdb
 
 
 def depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot, complete_files_path,
-                     geographical_complete_files_path, headers_on, common_files_path):
+                     geographical_complete_files_path, headers_on):
 
     # Here the data is discretized in a certain number of bins, and stored in different matrices for each of those bins.
     # Distinguish two cases, one for the stresses and one for the deflections, and define relevant variables
@@ -270,4 +270,4 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         plt.savefig(os.path.join(histogram_path, 'Complete_Earth_distribution.png'), bbox_inches='tight')
         fig_counter += 1
 
-    return classified_path, files_to_classify, maximum_depth, fig_counter
+    return classified_path, files_to_classify
