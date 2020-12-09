@@ -16,8 +16,9 @@ def element_tracker(base_path, area_params):
     depth_range = area_params[4] * 1000
     min_depth_name = str(depth_range[0]/1000)
     max_depth_name = str(depth_range[1]/1000)
-    table_bool = input('Enter 1 to generate the element tracking matrix for te selected latitude, longitude and depth '
-                       'ranges, 0 to skip this action: ')
+    # table_bool = input('Enter 1 to generate the element tracking matrix for te selected latitude, longitude and depth '
+    #                    'ranges, 0 to skip this action: ')
+    table_bool = 1
     if table_bool == 1:
         if not os.path.exists(os.path.join(base_path, 'Element_tracking_table' + min_depth_name + '_' + max_depth_name +
                                                       '.csv')):
@@ -29,7 +30,7 @@ def element_tracker(base_path, area_params):
                         for cycle_dir in os.listdir(step_path):
                             cycle_dir_counter = cycle_dir_counter + 1
                             stress_path = os.path.join(step_path, cycle_dir, 'stress_processing_results',
-                                                       'Stress_Part_Values', 'Complete_Files')
+                                                       'Complete_Files')
                             for f in os.listdir(stress_path):
                                 if f == 'Complete_file_EARTH.csv':
                                     files_to_check.append(os.path.join(stress_path, f))
@@ -74,7 +75,9 @@ def element_tracker(base_path, area_params):
                         e = np.array(e)
                         b_diff = e[:, 1]
                         b_disl = e[:, 2]
-                    viscosity = mises/(b_diff[max_index] * mises + b_disl[max_index] * mises ** 3.5)
+                    b_index = int(matrix[max_index, 0]) - 1
+                    viscosity = mises/(3*(b_diff[b_index] * mises + b_disl[b_index] * mises ** 3.5))
+
                     stresses = matrix[max_index]
                     stresses = stresses[:, 0:8]
                     value_vector = np.hstack((stresses, viscosity))
@@ -99,7 +102,10 @@ def element_tracker(base_path, area_params):
                     indices.append(str(int(iter_numbers[i, 0])) + ' ' + str(int(iter_numbers[i, 1])) + ' ' + str(
                         int(iter_numbers[i, 2])) + ' f.m.')
             table = pd.DataFrame(data=element_table, index=indices, columns=headers)
-            table.to_csv(os.path.join(base_path, 'Element_tracking_table_' + min_depth_name + '_' + max_depth_name +
-                                      '.csv'))
+            # table.round(decimals=1)
+            table.to_csv(os.path.join(base_path, 'Element_tracking_table_' + str(min_lat) + '_' + str(max_lat) +
+                                      str(min_lon) + '_' + str(max_lon) + '_' +
+                                      min_depth_name + '_' + max_depth_name +
+                                      '.csv'), float_format='%.1f')
 
 

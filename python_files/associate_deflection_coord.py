@@ -68,7 +68,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
             # the stresses, they are both vectors. Moreover, we don't need a complex file identification system because
             # here there is a direct connection between the number of deformation and coordinate files, since the
             # deflection report file does not differentiate into regions like the stress report file.
-            with open(os.path.join(individual_node_path, 'Nodes', 'Nodes_Part_' + csv_deflection_files[csv_file]), 'r') as \
+            with open(os.path.join(individual_node_path, 'Nodes_Part_' + csv_deflection_files[csv_file]), 'r') as \
                     coordinate_read_obj:
                 individual_coordinate_matrix = coordinate_read_obj.readlines()
                 individual_coordinate_matrix = [line.strip() for line in individual_coordinate_matrix[1:]]

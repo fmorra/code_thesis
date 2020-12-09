@@ -26,10 +26,10 @@ from element_tracker import *
 # name of the e.dat file and the Earth.dat file containing the node and element information for the entire model, and
 # the run, iteration, step, cycle numbers together with the report filenames.
 program_start_time = time.time()
-run = '26'
+run = '21'
 iteration = 1
 step = 0
-cycle = 2
+cycle = 1
 if not isinstance(run, str):
     run = str(run)
 stress_rpt_name = 'abaqus_run_' + run + '.rpt'
@@ -136,9 +136,13 @@ print 'The time spent to run depth discretization algorithm is: ', str(int(round
 # followed in this range only
 min_lat = -90
 max_lat = -65
-min_lon = -180
-max_lon = 180
-depths_to_plot = np.array([145, 150])
+min_lon = -150
+max_lon = -60
+# 145, 150
+# 543, 552
+# 775, 780
+# 979, 995
+depths_to_plot = np.array([979, 995])
 area_params = [min_lat, max_lat, min_lon, max_lon, depths_to_plot]
 element_tracker(base_path, area_params)
 # Generate text files to be read by MATLAB containing all the relevant information for plotting purposes

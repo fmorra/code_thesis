@@ -100,29 +100,29 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         layer_depth_km = [410, 660, maximum_depth / 1000]
     layer_depth_km = np.array(layer_depth_km)
     layer_depth = layer_depth_km * 1000
-    check_1 = 1
+    check_1 = 0
     check_2 = 1
     run_input = 1
-    # if os.path.exists(os.path.join(histogram_path, 'Complete_Earth_distribution.png')):
-    #     while check_1 == 1:
-    #         run_input = input('Do you want to rerun the depth discretization algorithm? 1 if yes, 0 if no: \n')
-    #         if run_input == 0:
-    #             check_1 = 0
-    #         elif run_input == 1:
-    #             while check_2 == 1:
-    #                 bin_input = input('Do you want to change the bin number? 1 if yes, 0 if no: \n')
-    #                 if bin_input == 0:
-    #                     check_2 = 0
-    #                     check_1 = 0
-    #                 elif bin_input == 1:
-    #                     n_bins = input('Enter number of layer bins:  \n')
-    #                     earth_bins = input('Enter number of model bins: \n')
-    #                     check_2 = 0
-    #                     check_1 = 0
-    #                 else:
-    #                     print('Incorrect input, select either 1 or 0. \n')
-    #         else:
-    #             print('incorrect input, select either 1 or 0. \n')
+    if os.path.exists(os.path.join(histogram_path, 'Complete_Earth_distribution.png')):
+        while check_1 == 1:
+            run_input = input('Do you want to rerun the depth discretization algorithm? 1 if yes, 0 if no: \n')
+            if run_input == 0:
+                check_1 = 0
+            elif run_input == 1:
+                while check_2 == 1:
+                    bin_input = input('Do you want to change the bin number? 1 if yes, 0 if no: \n')
+                    if bin_input == 0:
+                        check_2 = 0
+                        check_1 = 0
+                    elif bin_input == 1:
+                        n_bins = input('Enter number of layer bins:  \n')
+                        earth_bins = input('Enter number of model bins: \n')
+                        check_2 = 0
+                        check_1 = 0
+                    else:
+                        print('Incorrect input, select either 1 or 0. \n')
+            else:
+                print('incorrect input, select either 1 or 0. \n')
     fig_counter = 1
 
     if run_input == 0:

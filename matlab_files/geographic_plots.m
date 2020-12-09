@@ -25,10 +25,11 @@ iteration = '1';
 step = '0';
 cycle = '1';
 coordinate_system = 'geographical'; % cartesian or geographical
-quantity = 'deflections'; %stresses or deflections
+quantity = 'stresses'; %stresses or deflections
 % python_variables_path = [python_variables_base_path '\run_' run '\iteration_' iteration];
 python_variables_path = [python_base_path '\run_' run '\Iteration_' iteration...
     '\step_' step '\cycle_' cycle '_reports'];
+run_folder = [python_base_path '\run_' run];
 directory = dir(python_variables_path);
 directory_filenames = {directory.name};
 for i=1:length(directory_filenames)
@@ -114,25 +115,23 @@ diff_matrix_path = [python_base_path '\run_' run '\difference_matrices_plots\mat
 if ~exist(diff_matrix_path, 'dir')
     mkdir(diff_matrix_path)
 end
-min_lat = plotting_params(1);
-max_lat = plotting_params(2);
-min_lon = plotting_params(3);
-max_lon = plotting_params(4);
-depths_to_plot = [plotting_params(5) plotting_params(6)]; 
-if strcmp(quantity, 'deflections') == 1
-    min_lat = -90;
-    max_lat = -65;
-    min_lon = -180;
-    max_lon = 180;
-    depths_to_plot = [100 150];
-end
+% min_lat = plotting_params(1);
+% max_lat = plotting_params(2);
+% min_lon = plotting_params(3);
+% max_lon = plotting_params(4);
+%depths_to_plot = [plotting_params(5) plotting_params(6)]; 
+min_lat = -90;
+max_lat = -65;
+min_lon = -180;
+max_lon = 180;
+depths_to_plot = [145 150];
 if depths_to_plot(1) > depths_to_plot (2)
     depths_to_plot([1 2]) = depths_to_plot([2 1]);
 end
 if plots_bool == 1
-    depth_searcher(sd_input,coordinate_system,complete_matrices_path,...
+    depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
         files_to_classify,figures_path,diff_matrix_path,iteration,step,cycle,...
-        min_lat,max_lat,min_lon,max_lon,depths_to_plot);
+        min_lat,max_lat,min_lon,max_lon,depths_to_plot,run_folder);
 end
 
 %% Viscosity 

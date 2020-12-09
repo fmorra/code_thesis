@@ -1,6 +1,6 @@
-function [] = depth_searcher(sd_input,coordinate_system,complete_matrices_path,...
+function [] = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
     ~,figures_path,diff_matrix_path,iteration,step,cycle,...
-    min_lat,max_lat,min_lon,max_lon,depths_to_plot)
+    min_lat,max_lat,min_lon,max_lon,depths_to_plot,run_folder)
 % This function is used to select the data points to plot by giving an
 % interval of points, as a substitute to the depth_classifier function.
 
@@ -16,9 +16,12 @@ end
 
 parts_to_plot = {'EARTH'};
 if sd_input == 0
-    selected_component = input(['Enter the desired stress component(s) to plot,' ...
-        ' possible values are Mises, S11, S22, S33, S12, S13, S23:\n']);
+%     selected_component = input(['Enter the desired stress component(s) to plot,' ...
+%         ' possible values are Mises, S11, S22, S33, S12, S13, S23:\n']);
+    selected_component = 'Mises S11 S12';
     selected_components = split(selected_component);
+    colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
+        selected_components, run_folder);
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
         if strcmp(selected_components{k}, 'Mises') == 1
@@ -38,8 +41,9 @@ if sd_input == 0
         end
     end
 else
-    selected_component = input(['Enter the desired deflection components(s) to plot,' ...
-        ' possible values are Magnitude, U1, U2, U3:\n']);
+%     selected_component = input(['Enter the desired deflection components(s) to plot,' ...
+%         ' possible values are Magnitude, U1, U2, U3:\n']);
+    selected_component = 'Magnitude U3';
     selected_components = split(selected_component);
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
@@ -81,26 +85,39 @@ for i=1:length(parts_to_plot)
         matrix_for_difference(:,j) = plot_variable;
         matrix_for_difference(:,end-1) = lat(data_points_indices);
         matrix_for_difference(:,end) = lon(data_points_indices);
-        
         [Z, refvec] = geoloc2grid(lat(data_points_indices),wrapTo360(lon(data_points_indices)),...
             plot_variable,0.5);
         load coastlines;
         cmap = colormap('jet');
         alpha 0.7;
         colormap(cmap);
-        caxis('auto'); % was [0 1e6]
-        h = colorbar('v'); %set(h, 'ylim', [0 1e6]);
-        if sd_input == 0
-            set(get(h,'ylabel'),'string',[selected_components{j} ' (Pa)'])
-        else
-            set(get(h,'ylabel'),'string',[selected_components{j} ' (m)'])
-        end
         latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
         ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
         set(ax,'Visible','off');
         set(findall(gca, 'type', 'text'), 'visible', 'on')
         geoshow(Z, refvec, 'DisplayType', 'texture');
         plotm(coastlat,coastlon);
+
+%         latlim = [-90 -65];
+%         lonlim = [-180 180];
+%         worldmap(latlim,lonlim);
+%         load coastlines;
+%         [LatGrid, LonGrid] = meshgrid(linspace(min(lat(data_points_indices)), max(lat(data_points_indices)),1000), ...
+%         linspace(min(lon(data_points_indices)), max(lon(data_points_indices)),1000));
+%         stressgrid = griddata(lat(data_points_indices), lon(data_points_indices), plot_variable, LatGrid, LonGrid);
+%         surfm(LatGrid, LonGrid, stressgrid);
+%         plotm(coastlat, coastlon);
+%         camroll(180)
+        
+         %set(h, 'ylim', [0 1e6]);
+        % caxis('auto'); % was [0 1e6]
+        caxis([colorbarlimits(j) colorbarlimits(j+length(colorbarlimits)/2)]);
+        h = colorbar('v');
+        if sd_input == 0
+            set(get(h,'ylabel'),'string',[selected_components{j} ' (Pa)'])
+        else
+            set(get(h,'ylabel'),'string',[selected_components{j} ' (m)'])
+        end
         if sd_input == 0
             title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
                 [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j}]});
@@ -110,11 +127,12 @@ for i=1:length(parts_to_plot)
         end
         set(findall(gca, 'type', 'text'), 'visible', 'on')
         grid on;
+        
         % Save the figures based on whether we are working with
         % stresses or deflections
         saveas(gcf,[figures_path '\' coordinate_system '_' components_to_plot '_' parts_to_plot{i}...
-            '_depth_range_[' num2str(min_depth) '-' num2str(max_depth) ']_km_Component_'...
-            selected_components{j} '.png']);
+            '[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
+            selected_components{j} '_' run '_' iteration '_' step '_' cycle '.png']);
     end
     %if strcmp(parts_to_plot,'EARTH') == 1
     matrix_for_difference_wheaders = [matrix_for_difference_headers; num2cell(matrix_for_difference)];
@@ -123,51 +141,3 @@ for i=1:length(parts_to_plot)
     % end
 end
 end
-
-%% Old
-
-% disp('The existing parts to plot are:');
-% possible_parts_display = cell(length(possible_parts),1);
-% for i = 1:length(possible_parts)
-%     possible_parts_display{i} = extractAfter(extractBefore(possible_parts{i}...
-%         , '.csv'), 'file_');
-% end
-% disp(possible_parts_display)
-% parts_to_plot = input(['Choose which parts to select for plotting, entered'...
-%     ' as a string delimited by upper commas, without the .csv at the end:\n']);
-% parts_to_plot = split(parts_to_plot);
-% Create figure
-%             figure('Position', get(0, 'Screensize'))
-%             % Load world map with coastlines
-%             %worldmap world;
-%             worldmap ([min_lat max_lat],[min_lon max_lon])
-%             load coastlines;
-%             plotm(coastlat, coastlon);
-%             % Grid the data before plotting, and generate a surface
-%             [LatGrid, LonGrid] = meshgrid(linspace(min(lat_to_plot), max(lat_to_plot),1000), ...
-%                 linspace(min(lon_to_plot), max(lon_to_plot),1000));
-%             stressgrid = griddata(lat_to_plot, lon_to_plot, variable_to_plot, LatGrid, LonGrid);
-%             surfm(LatGrid, LonGrid, stressgrid);
-%             % Figure propeties definition
-%             if sd_input == 0
-%                 t = title(['Map of the ' components_to_plot 'for part' parts_to_plot{i} 'with depth range '...
-%                     num2str(min_depth) '-' num2str(max_depth) ' and component ' selected_components{l}]);
-%                 pos = get(t, 'position');
-%                 set(t, 'position', [1.5e6 -7.7e6 0]);
-%             else
-%                 t = title(['Map of the ' components_to_plot 'for part' parts_to_plot{i} 'with depth range '...
-%                     num2str(min_depth) '-' num2str(max_depth) ' and component ' selected_components{l}]);
-%                 pos =get (t, 'position');
-%                 set(t, 'position', [1.5e6 -7.7e6 0]);
-%             end
-%
-%             alpha 0.5;
-%             c = colorbar;
-%             if sd_input == 0
-%                 c.Label.String = 'Stress [Pa]';
-%             else
-%                 c.Label.String = 'Deflections  [m]';
-%             end
-%             c.Location = 'southoutside';
-%         pos = get(t, 'position');
-%         set(t, 'position', [1.5e6 -7.7e6 0]);
