@@ -9,6 +9,9 @@ dat_names = ...
     strcat('dy_surface0',extension),strcat('dy_surface9',extension),strcat('dy_surface10',extension),...
     strcat('dz_surface0',extension),strcat('dz_surface9',extension),strcat('dz_surface10',extension)};
 
+
+
+
 for i = 1:length(dat_names)
     my_file = importdata([my_files_path '\' dat_names{i}]);
     bas_file = importdata([bas_files_path '\' dat_names{i}]);
@@ -29,18 +32,25 @@ for i = 1:length(dat_names)
     end
     
     figure(i)
-    surf(lon_vector_plot,lat_vector_plot,diff_matrix_percent, 'edgecolor', 'none')
+    surf(lon_vector_plot,lat_vector_plot,bas_file, 'edgecolor', 'none')
     axis([lon_vector_plot(end) lon_vector_plot(1) lat_vector_plot(end) lat_vector_plot(1)])
     set(gca,'Xtick',lon_vector_plot(end):20:lon_vector_plot(1))
     set(gca,'Ytick',lat_vector_plot(end):10:lat_vector_plot(1))
     set(gca, 'Xdir', 'reverse')
     set(gca, 'Ydir', 'reverse')
     xlabel('Longitude (deg)'); ylabel('Latitude(deg)');
-    title(['Percentage difference for ' dat_names{i}], 'Interpreter', 'none');
-    %view(180,90);
+    if contains(dat_names{i}, 'surface')
+        title_file_name = extractBefore(dat_names{i}, '_');
+    else
+        title_file_name = extractBefore(dat_names{i}, ...
+        regexp(dat_names{i},'[\d\.]+','match'));
+    end
+    title_part = [title_file_name ' values difference for timestep ' char(regexp(dat_names{i},'\d+','match'))];
+    title([title_part], 'Interpreter', 'none');
+    view(180,90);
     h = colorbar('v');
-    set(get(h,'ylabel'),'string','%')
+    set(get(h,'ylabel'),'string',[title_file_name ' value difference [m]'])
     grid on;
-    saveas(gcf,['C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files\' dat_names{i}(1:end-4) '.png']);
+    % saveas(gcf,['C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files\' dat_names{i}(1:end-4) '.png']);
     
 end

@@ -8,7 +8,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
 
     # Define the relevant paths and if necessary create relevant directories
     large_node_matrix_path = os.path.join(common_files_path, 'Large_Node_Matrix.csv')
-    individual_path = os.path.join(common_files_path, 'Individual_Part_Values')
+    individual_path = os.path.join(common_files_path, 'Individual_part_values')
     # individual_node_path = os.path.join(individual_path, 'Nodes')
     if not os.path.exists(individual_path):
         os.makedirs(individual_path)

@@ -26,10 +26,10 @@ from element_tracker import *
 # name of the e.dat file and the Earth.dat file containing the node and element information for the entire model, and
 # the run, iteration, step, cycle numbers together with the report filenames.
 program_start_time = time.time()
-run = '21'
+run = '22'
 iteration = 1
 step = 0
-cycle = 1
+cycle = 2
 if not isinstance(run, str):
     run = str(run)
 stress_rpt_name = 'abaqus_run_' + run + '.rpt'
@@ -89,7 +89,7 @@ if not os.path.exists(deflection_processing_path):
 # Choose whether to save files with headers or not and  choose what quantity to work with
 headers_on = 1
 check_1 = 1
-sd_input = 0
+sd_input = 1
 # while check_1 == 1:
 #     sd_input = input('Enter 0 to work with stress components, 1 for the deflections: \n')
 #     if sd_input == 0 or sd_input == 1:
@@ -142,7 +142,7 @@ max_lon = -60
 # 543, 552
 # 775, 780
 # 979, 995
-depths_to_plot = np.array([979, 995])
+depths_to_plot = np.array([145, 150])
 area_params = [min_lat, max_lat, min_lon, max_lon, depths_to_plot]
 element_tracker(base_path, area_params)
 # Generate text files to be read by MATLAB containing all the relevant information for plotting purposes

@@ -1,9 +1,10 @@
-function [] = diff_calculator(diff_matrix_path_incomplete,min_lat,max_lat,min_lon,max_lon)
+function [] = diff_calculator(diff_matrix_path_incomplete,min_lat,max_lat,...
+    min_lon,max_lon,run,depths_to_plot,iteration,step)
 % Calculate the differences between two similar plots, where possible.
 % [1 0 1 145 150]
 % [1 0 2 145 150]
 
-visco_choice = 0;
+visco_choice = 1;
 if visco_choice == 0
     stress_deflection_input = 1;
     ref_system_input = 1;
@@ -38,10 +39,14 @@ diff_files = {dir_diff_files.name};
 
 matrix_1_flag = 0;
 while matrix_1_flag == 0
-    quintuplet_1 = input(['Enter the iteration, step and cycle number, and the minimum and maximum depth '...
-    'of the first matrix used to plot the difference with respect to another moment in time '...
-    'as a vector of square brackets of five values:\n']);
+%     quintuplet_1 = input(['Enter the iteration, step and cycle number, and the minimum and maximum depth '...
+%     'of the first matrix used to plot the difference with respect to another moment in time '...
+%     'as a vector of square brackets of five values:\n']);
+%     for i=1:length(diff_files)
+%         found_values_1 = str2double(regexp(diff_files{i}, '\d+', 'match'));
     for i=1:length(diff_files)
+        quintuplet_1 = [str2double(iteration) str2double(step) 2 ...
+            depths_to_plot(1) depths_to_plot(2)];
         found_values_1 = str2double(regexp(diff_files{i}, '\d+', 'match'));
         if isequal(quintuplet_1,found_values_1)
             matrix_1_flag = 1;
@@ -62,10 +67,14 @@ end
 
 matrix_2_flag = 0;
 while matrix_2_flag == 0
-    quintuplet_2 = input(['Enter the run, step and cycle number, and the minimum and maximum depth '...
-    'of the second matrix  used to plot the difference with respect to another moment in time '...
-    'as a vector of square brackets of five values:\n']);
+%     quintuplet_2 = input(['Enter the run, step and cycle number, and the minimum and maximum depth '...
+%     'of the second matrix  used to plot the difference with respect to another moment in time '...
+%     'as a vector of square brackets of five values:\n']);
+%     for i=1:length(diff_files)
+%         found_values_2 = str2double(regexp(diff_files{i}, '\d+', 'match'));
     for i=1:length(diff_files)
+        quintuplet_2 = [str2double(iteration) str2double(step) 3 ...
+            depths_to_plot(1) depths_to_plot(2)];
         found_values_2 = str2double(regexp(diff_files{i}, '\d+', 'match'));
         if isequal(quintuplet_2,found_values_2)
             matrix_2_flag = 1;
@@ -105,7 +114,11 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
         diff_variable_1 = values_1(:,strcmp(headers_1,diff_variables_to_plot{i}));
         diff_variable_2 = values_2(:,strcmp(headers_2,diff_variables_to_plot{i}));
         diff = diff_variable_2-diff_variable_1;
-        [Z, refvec] = geoloc2grid(lat,lon,diff,0.5);
+        if visco_choice == 1
+            [Z, refvec] = geoloc2grid(lat,lon,log10(diff),0.5);
+        else
+            [Z, refvec] = geoloc2grid(lat,lon,diff,0.5);
+        end
         load coastlines;
         cmap = colormap('jet');
         alpha 0.7;
@@ -114,9 +127,9 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
         h = colorbar('v'); %set(h, 'ylim', [0 1e6]);
         if visco_choice == 1
             if visco_strain_input == 0
-                set(get(h,'ylabel'),'string',[diff_variables_to_plot{i} ' [N \cdot s/m^2]'])
+                set(get(h,'ylabel'),'string',['log_{10}' diff_variables_to_plot{i} ' [N \cdot s/m^2]'])
             else
-                set(get(h,'ylabel'),'string',[diff_variables_to_plot{i}])
+                set(get(h,'ylabel'),'string',['log_{10}' diff_variables_to_plot{i}])
             end
         else
             if stress_deflection_input == 0
@@ -151,15 +164,15 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
         if visco_choice == 1
             saveas(gcf,[diff_plots_folder '\diff_plot_' quantity '_'...
                 '_depth_range_[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
-                '_Iterations_[' num2str(iteration_1)...
-                '_' num2str(iteration_2) ']_steps_[' num2str(step_1) '_' num2str(step_2)...
-                ']_cycles[' num2str(cycle_1) '_' num2str(cycle_2) '].png']);
+                '_' run '_[' num2str(iteration_1)...
+                '_' num2str(iteration_2) ']_[' num2str(step_1) '_' num2str(step_2)...
+                ']_[' num2str(cycle_1) '_' num2str(cycle_2) '].png']);
         else
             saveas(gcf,[diff_plots_folder '\diff_plot_' ref_system '_' quantity '_'...
-                '_depth_range_[' num2str(min_depth) '-' num2str(max_depth) ']_km_Component_'...
-                diff_variables_to_plot{i} '_Iterations_[' num2str(iteration_1)...
-                '_' num2str(iteration_2) ']_steps_[' num2str(step_1) '_' num2str(step_2)...
-                ']_cycles[' num2str(cycle_1) '_' num2str(cycle_2) '].png']);
+                '[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
+                diff_variables_to_plot{i} '_' run '_[' num2str(iteration_1)...
+                '_' num2str(iteration_2) ']_[' num2str(step_1) '_' num2str(step_2)...
+                ']_[' num2str(cycle_1) '_' num2str(cycle_2) '].png']);
         end
     end
 end

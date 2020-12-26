@@ -1,5 +1,5 @@
 function [colorbarlimits] = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components, run_folder)
+        selected_components, run_folder, viscosity_input)
 
 list = dir([run_folder '\**\Geographical_complete_file_EARTH.csv']);
 names = extractfield(list,'name');
@@ -17,7 +17,7 @@ end
 full_stress_files = full_stress_files(~cellfun('isempty',full_stress_files));
 full_defo_files = full_defo_files(~cellfun('isempty',full_defo_files));
 
-if sd_input == 0
+if sd_input == 0 && viscosity_input == 0
     stress_extremes_matrix = zeros(length(full_stress_files),length(selected_components)*2);
     for j = 1:length(full_stress_files)
         stress_matrix = readmatrix(full_stress_files{j});
@@ -61,7 +61,7 @@ if sd_input == 0
     colorbarlimits = [min(stress_extremes_matrix(:,1:2:size(stress_extremes_matrix,2)-1))...
         max(stress_extremes_matrix(:,2:2:size(stress_extremes_matrix,2)))];
 %     colorbarlimits = stress_extremes_matrix;
-else
+elseif sd_input == 1 && viscosity_input == 0
     defo_extremes_matrix = zeros(length(full_defo_files),length(selected_components)*2);
     for k = 1:length(full_defo_files)
         defo_matrix = readmatrix(full_defo_files{k});
@@ -80,8 +80,8 @@ else
             end
         end
         depth = defo_matrix(:,end-2)/1e3;
-        lat = stress_matrix(:,end-1);
-        lon = stress_matrix(:,end);
+        lat = defo_matrix(:,end-1);
+        lon = defo_matrix(:,end);
         min_depth = depths_to_plot(1);
         max_depth = depths_to_plot(2);
         depth_condtion = depth>min_depth & depth<max_depth;
@@ -99,6 +99,50 @@ else
         max(defo_extremes_matrix(:,2:2:size(defo_extremes_matrix,2)))];
 %         colorbarlimits = defo_extremes_matrix;
     end
+elseif viscosity_input == 1
+    visco_extremes_matrix = zeros(length(full_stress_files),2);
+    for l = 1:length(full_stress_files)
+        e_path = [run_folder '\e.dat'];
+        e = readmatrix(e_path);
+        elements = e(:,1);
+        alin = e(:,2);
+        a = e(:,3);
+        an = 3.5;
+        strain_rate = zeros(length(e),1);
+        opened_visco_matrix = readmatrix(full_stress_files{l});
+        mises = opened_visco_matrix(:,2);
+        pow = (an);
+        for j = 1:length(strain_rate)
+            strain_rate(j,1) = alin(j)*mises(j) + a(j)*mises(j)^pow;
+        end
+        viscosity = mises./(3*strain_rate);
+        viscosity_matrix = zeros(length(opened_visco_matrix),4);
+        viscosity_matrix(:,1) = elements;
+        viscosity_matrix(:,end - 2) = viscosity;
+        viscosity_matrix(:,end - 1) = strain_rate;
+        viscosity_matrix(:,end) = mises;
+        complete_matrix_with_viscosity = [opened_visco_matrix, viscosity_matrix];
+        
+        min_depth = depths_to_plot(1);
+        max_depth = depths_to_plot(2);
+        matrix_to_read = complete_matrix_with_viscosity;
+        depth = matrix_to_read(:,end-6)/1e3;
+        lat = matrix_to_read(:,end-5);
+        lon = matrix_to_read(:,end-4);
+        depth_condtion = depth>min_depth & depth<max_depth;
+        lat_condition = lat>min_lat & lat<max_lat;
+        lon_condition = lon>min_lon & lon<max_lon;
+        data_points_indices = complete_matrix_with_viscosity(depth_condtion...
+            & lat_condition & lon_condition);
+        condition_matrix = complete_matrix_with_viscosity(data_points_indices,:);
+        variable = condition_matrix(:,end-2);
+        variable_extremes = [min(variable),max(variable)];
+        visco_extremes_matrix(l,1:2) = variable_extremes;
+        colorbarlimits = [min(visco_extremes_matrix(:,1))...
+        max(visco_extremes_matrix(:,2))];
+    end
+else
+    
 end
 end
 

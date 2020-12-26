@@ -1,15 +1,22 @@
-function [visco_diff_path] = visco_plotter(python_variables_base_path,coordinate_system, ...
+function [visco_diff_path] = visco_plotter(sd_input,python_variables_base_path,coordinate_system, ...
     complete_matrices_path,report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-    iteration,step,cycle,diff_matrix_path)
+    iteration,step,cycle,diff_matrix_path,run_folder,run)
 close all; clc;
-disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
+% disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
 parts_to_plot = {'EARTH'};
-visco_strain_input = input('Enter 0 to plot the viscosity, 1 to plot the strain rate:\n');
+% visco_strain_input = input('Enter 0 to plot the viscosity, 1 to plot the strain rate:\n');
+% if visco_strain_input == 0
+%     quantity = 'viscosity';
+% else
+%     quantity = 'strain_rate';
+% end
+visco_strain_input = 0;
 if visco_strain_input == 0
     quantity = 'viscosity';
 else
     quantity = 'strain_rate';
 end
+viscosity_input = 1;
 visco_diff_path = [diff_matrix_path '\' quantity];
 if ~exist(visco_diff_path, 'dir')
     mkdir(visco_diff_path)
@@ -19,6 +26,7 @@ viscosity_figures_path = [report_path '\viscosity_plots'];
 if ~exist(viscosity_figures_path, 'dir')
     mkdir (viscosity_figures_path)
 end
+
 for i=1:length(parts_to_plot)
     % for i = 1:length(iteration_subfolders)
     iter_path = python_variables_base_path;
@@ -30,7 +38,9 @@ for i=1:length(parts_to_plot)
         matrix_to_open_path = [complete_matrices_path '\geographical_complete_file_'...
             parts_to_plot{i} '.csv'];
     end
-    
+    selected_components = '';
+    colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
+        selected_components,run_folder, viscosity_input);
     e = readmatrix(e_path);
     elements = e(:,1);
     alin = e(:,2);
@@ -73,40 +83,50 @@ for i=1:length(parts_to_plot)
     matrix_for_difference(:,end-2) = plot_variable;
     matrix_for_difference(:,end-1) = lat(data_points_indices);
     matrix_for_difference(:,end) = lon(data_points_indices);
-    load coastlines;
-    latlim = [min_lat max_lat];
-    lonlim = [min_lon max_lon];
-    [Z, refvec] = geoloc2grid(lat(data_points_indices),lon(data_points_indices),...
-        plot_variable,0.5);
-    cmap = colormap('jet');
-    colormap(cmap);
-    caxis('auto');
-    ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
-    plotm(coastlat,coastlon);
-    set(ax,'Visible','off');
-    set(findall(gca, 'type', 'text'), 'visible', 'on')
-    geoshow(Z, refvec, 'DisplayType', 'texture');
-    
-%     worldmap (latlim,lonlim)
-%     % Grid the data before plotting, and generate a surface
-%     [LatGrid, LonGrid] = meshgrid(linspace(min(lat(data_points_indices)), max(lat(data_points_indices)),1000), ...
-%         linspace(min(lon(data_points_indices)), max(lon(data_points_indices)),1000));
+%     load coastlines;
+%     [Z, refvec] = geoloc2grid(lat(data_points_indices),lon(data_points_indices),...
+%         plot_variable,0.5);
+%     cmap = colormap('jet');
+%     alpha 0.7;
+%     colormap(cmap);
+%     latlim = [min_lat max_lat];
+%     lonlim = [min_lon max_lon];
+%     ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
+%     set(ax,'Visible','off');
+%     set(findall(gca, 'type', 'text'), 'visible', 'on')
+%     geoshow(Z, refvec, 'DisplayType', 'texture');
 %     plotm(coastlat,coastlon);
-%     stressgrid = griddata(lat(data_points_indices), lon(data_points_indices), plot_variable, LatGrid, LonGrid);
-%     surfm(LatGrid, LonGrid, stressgrid);
+
+    latlim = [-90 -65];
+    lonlim = [-180 180];
+    figure()
+    worldmap(latlim,lonlim);
+    load coastlines;
+    [LatGrid, LonGrid] = meshgrid(linspace(min(lat(data_points_indices)), max(lat(data_points_indices)),500), ...
+    linspace(min(lon(data_points_indices)), max(lon(data_points_indices)),500));
+    viscogrid = griddata(lat(data_points_indices), lon(data_points_indices),...
+        plot_variable, LatGrid, LonGrid,'v4');
+    surfm(LatGrid, LonGrid, viscogrid);
+    colormap summer;
+    plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
+    camroll(180)
     
+    % caxis('auto');
+    caxis(log10([colorbarlimits(1) colorbarlimits(2)]));
     h = colorbar('v'); % set(h, 'ylim', [0 1e6]);
     if visco_strain_input == 0
-        set(get(h,'ylabel'),'string','Viscosity [Ns/m^2]')
+        set(get(h,'ylabel'),'string','log_{10}Viscosity [Ns/m^2]')
     else
-        set(get(h,'ylabel'),'string','Strain rate')
+        set(get(h,'ylabel'),'string','log_{10}Strain rate')
     end
     if visco_strain_input == 0
         title({['Viscosity for part ' parts_to_plot{i} ' with depth range '], ...
-               [num2str(min_depth) '-' num2str(max_depth) ' km']});
+            [num2str(min_depth) '-' num2str(max_depth) ' km, iteration ' ...
+            num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)]});
     else
         title({['Strain rate for part ' parts_to_plot{i} ' with depth range '], ...
-                [num2str(min_depth) '-' num2str(max_depth) ' km']})
+            [num2str(min_depth) '-' num2str(max_depth) ' km, iteration ' ...
+            num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)]});
     end
     set(findall(gca, 'type', 'text'), 'visible', 'on')
     grid on;
@@ -114,19 +134,21 @@ for i=1:length(parts_to_plot)
     % stresses or deflections
     if visco_strain_input == 0
         saveas(gcf,[viscosity_figures_path '\' 'Viscosity_' parts_to_plot{i}...
-            '_depth_range_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
+            '[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
+            quantity '_' run '_' iteration '_' step '_' cycle '.png']);
     else
         saveas(gcf,[viscosity_figures_path '\' 'Strain_rate_' parts_to_plot{i}...
-            '_depth_range_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
+            '[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
+            quantity '_' run '_' iteration '_' step '_' cycle '.png']);
     end
     matrix_for_difference_wheaders = [matrix_for_difference_headers; num2cell(matrix_for_difference)];
     writecell(matrix_for_difference_wheaders,[visco_diff_path '\Iteration_' iteration '_step_' step ...
         '_cycle_' cycle '_' num2str(min_depth) '_' num2str(max_depth) '_km.csv']);
 end
-% for i=1:length(parts_to_plot)
-%     B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
-%         min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon);
-% end
+for i=1:length(parts_to_plot)
+    B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
+        min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run);
+end
 
 end
 

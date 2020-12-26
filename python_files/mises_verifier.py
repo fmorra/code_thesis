@@ -12,5 +12,7 @@ mises_stress = (1 / np.sqrt(2)) * np.sqrt((data_matrix[:, 2] - data_matrix[:, 3]
                                           6 * (data_matrix[:, 5] ** 2 + data_matrix[:, 7] ** 2 +
                                                data_matrix[:, 6] ** 2))
 diff = abs(mises_stress - data_matrix[:, 1])
-rel_diff = diff / data_matrix[:, 1]
+rel_diff = diff / data_matrix[:, 1] * 100
 print max(rel_diff)
+print max(diff)
+print min(diff)

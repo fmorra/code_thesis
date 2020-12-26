@@ -9,6 +9,7 @@ if sd_input == 0
 else
     components_to_plot = 'deflections';
 end
+viscosity_input = 0;
 complete_diff_path = [diff_matrix_path '\' components_to_plot  '\' coordinate_system];
 if ~exist(complete_diff_path, 'dir')
     mkdir(complete_diff_path)
@@ -21,7 +22,7 @@ if sd_input == 0
     selected_component = 'Mises S11 S12';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components, run_folder);
+        selected_components, run_folder, viscosity_input);
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
         if strcmp(selected_components{k}, 'Mises') == 1
@@ -45,6 +46,8 @@ else
 %         ' possible values are Magnitude, U1, U2, U3:\n']);
     selected_component = 'Magnitude U3';
     selected_components = split(selected_component);
+    colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
+        selected_components, run_folder, viscosity_input);
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
         if strcmp(selected_components{k}, 'Magnitude') == 1
@@ -85,32 +88,33 @@ for i=1:length(parts_to_plot)
         matrix_for_difference(:,j) = plot_variable;
         matrix_for_difference(:,end-1) = lat(data_points_indices);
         matrix_for_difference(:,end) = lon(data_points_indices);
-        [Z, refvec] = geoloc2grid(lat(data_points_indices),wrapTo360(lon(data_points_indices)),...
-            plot_variable,0.5);
-        load coastlines;
-        cmap = colormap('jet');
-        alpha 0.7;
-        colormap(cmap);
-        latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
-        ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
-        set(ax,'Visible','off');
-        set(findall(gca, 'type', 'text'), 'visible', 'on')
-        geoshow(Z, refvec, 'DisplayType', 'texture');
-        plotm(coastlat,coastlon);
-
-%         latlim = [-90 -65];
-%         lonlim = [-180 180];
-%         worldmap(latlim,lonlim);
+%         [Z, refvec] = geoloc2grid(lat(data_points_indices),wrapTo360(lon(data_points_indices)),...
+%             plot_variable,0.5);
 %         load coastlines;
-%         [LatGrid, LonGrid] = meshgrid(linspace(min(lat(data_points_indices)), max(lat(data_points_indices)),1000), ...
-%         linspace(min(lon(data_points_indices)), max(lon(data_points_indices)),1000));
-%         stressgrid = griddata(lat(data_points_indices), lon(data_points_indices), plot_variable, LatGrid, LonGrid);
-%         surfm(LatGrid, LonGrid, stressgrid);
-%         plotm(coastlat, coastlon);
-%         camroll(180)
+%         cmap = colormap('jet');
+%         alpha 0.7;
+%         colormap(cmap);
+%         latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
+%         ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
+%         set(ax,'Visible','off');
+%         set(findall(gca, 'type', 'text'), 'visible', 'on')
+%         geoshow(Z, refvec, 'DisplayType', 'texture');
+%         plotm(coastlat,coastlon);
+
+        latlim = [-90 -65];
+        lonlim = [-180 180];
+        figure(j)
+        worldmap(latlim,lonlim);
+        load coastlines;
+        [LatGrid, LonGrid] = meshgrid(linspace(min(lat(data_points_indices)), max(lat(data_points_indices)),500), ...
+        linspace(min(lon(data_points_indices)), max(lon(data_points_indices)),500));
+        stressgrid = griddata(lat(data_points_indices), lon(data_points_indices),...
+            plot_variable, LatGrid, LonGrid,'v4');
+        surfm(LatGrid, LonGrid, stressgrid);
+        colormap summer;
+        plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
+        camroll(180)
         
-         %set(h, 'ylim', [0 1e6]);
-        % caxis('auto'); % was [0 1e6]
         caxis([colorbarlimits(j) colorbarlimits(j+length(colorbarlimits)/2)]);
         h = colorbar('v');
         if sd_input == 0
@@ -120,10 +124,12 @@ for i=1:length(parts_to_plot)
         end
         if sd_input == 0
             title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j}]});
+                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j} ...
+                ', iteration ' num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)]});
         else 
             title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j}]});
+                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j} ...
+                ', iteration ' num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)]});
         end
         set(findall(gca, 'type', 'text'), 'visible', 'on')
         grid on;
