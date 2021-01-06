@@ -22,22 +22,11 @@ parts_to_plot = {'EARTH'};
 resolution = 0.25;
 latlim = [min_lat max_lat];
 lonlim = [min_lon max_lon];
-min_depth = depths_to_plot(1);
-max_depth = depths_to_plot(2);
-s = referenceSphere('Earth');
 lat_lin = max_lat:-resolution:min_lat;
 lon_lin = min_lon:resolution:max_lon;
 [gridded_lon,gridded_lat] = meshgrid(lon_lin,lat_lin);
-% plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
-% plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
-r_out = []; lon_plot_2 = []; lat_plot_2 = [];
-depthrange = min_depth:1:max_depth;
-for dd = depthrange
-    lon_plot_2 = [lon_plot_2; gridded_lon(:)];
-    lat_plot_2 = [lat_plot_2; gridded_lat(:)];
-    temp = (s.Radius-dd*1e3)*ones(size(gridded_lon));
-    r_out = [r_out; temp(:)];
-end
+plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
+plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
 
 if sd_input == 0
 %     selected_component = input(['Enter the desired stress component(s) to plot,' ...
@@ -119,13 +108,9 @@ for i=1:length(parts_to_plot)
     matrix_for_difference_headers = [selected_components','Latitude','Longitude'];
     for j = 1:length(selected_columns)
         plot_variable = matrix_to_read(data_points_indices,selected_columns(j));
-        filtered_lat = lat(data_points_indices);
-        filtered_lon = lon(data_points_indices);
-        depth_out = depth(data_points_indices);
-        filtered_R = s.Radius - 1e3*depth_out;
-        matrix_for_difference(:,end-2) = plot_variable;
-        matrix_for_difference(:,end-1) = filtered_lat;
-        matrix_for_difference(:,end) = filtered_lon;
+        matrix_for_difference(:,j) = plot_variable;
+        matrix_for_difference(:,end-1) = lat(data_points_indices);
+        matrix_for_difference(:,end) = lon(data_points_indices);
         
 %         plot_variable_grid = griddata(lon(data_points_indices),lat(data_points_indices)...
 %             ,plot_variable,long,lati,'linear');
@@ -155,14 +140,9 @@ for i=1:length(parts_to_plot)
 %         set(findall(gca, 'type', 'text'), 'visible', 'on')
 %         geoshow(Z, refvec, 'DisplayType', 'texture');
 %         plotm(coastlat,coastlon, 'color', rgb('OrangeRed'));
-%         R_lin = R*ones(length(plot_lon),1);
-        [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
-        [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
 
-        figure(1)
-        scatter3(x_in,y_in,z_in,10,z_in)
         plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
-        figure(figure_counter+1)
+        figure(6)
         colormap summer;
         load coastlines;
         [Z, refvec] = geoloc2grid(lat_plot_2,lon_plot_2,plot_variable_out,resolution);

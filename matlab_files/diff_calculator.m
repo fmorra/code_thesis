@@ -1,10 +1,10 @@
-function [] = diff_calculator(diff_matrix_path_incomplete,min_lat,max_lat,...
-    min_lon,max_lon,run,depths_to_plot,iteration,step)
+function [figure_counter] = diff_calculator(diff_matrix_path_incomplete,min_lat,max_lat,...
+    min_lon,max_lon,run,depths_to_plot,iteration,step,figure_counter)
 % Calculate the differences between two similar plots, where possible.
 % [1 0 1 145 150]
 % [1 0 2 145 150]
 
-visco_choice = 1;
+visco_choice = 0;
 if visco_choice == 0
     stress_deflection_input = 1;
     ref_system_input = 1;
@@ -114,22 +114,29 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
         diff_variable_1 = values_1(:,strcmp(headers_1,diff_variables_to_plot{i}));
         diff_variable_2 = values_2(:,strcmp(headers_2,diff_variables_to_plot{i}));
         diff = diff_variable_2-diff_variable_1;
-        if visco_choice == 1
-            [Z, refvec] = geoloc2grid(lat,lon,log10(diff),0.5);
-        else
-            [Z, refvec] = geoloc2grid(lat,lon,diff,0.5);
-        end
+        latlim = [min_lat max_lat];
+        lonlim = [min_lon max_lon];
+        figure(figure_counter)
+        worldmap(latlim,lonlim);
         load coastlines;
-        cmap = colormap('jet');
-        alpha 0.7;
-        colormap(cmap);
+        [LatGrid, LonGrid] = meshgrid(linspace(min(lat), max(lat),500), ...
+            linspace(min(lon), max(lon),400));
+        if visco_choice == 1
+            diff_grid = griddata(lat, lon, diff, LatGrid, LonGrid,'v4');
+        else
+            diff_grid = griddata(lat, lon, diff, LatGrid, LonGrid,'v4');
+        end
+        surfm(LatGrid, LonGrid, diff_grid);
+        colormap summer;
+        plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
+        camroll(180)
         caxis('auto'); % was [0 1e6]
         h = colorbar('v'); %set(h, 'ylim', [0 1e6]);
         if visco_choice == 1
             if visco_strain_input == 0
-                set(get(h,'ylabel'),'string',['log_{10}' diff_variables_to_plot{i} ' [N \cdot s/m^2]'])
+                set(get(h,'ylabel'),'string',[ diff_variables_to_plot{i} ' [N \cdot s/m^2]'])
             else
-                set(get(h,'ylabel'),'string',['log_{10}' diff_variables_to_plot{i}])
+                set(get(h,'ylabel'),'string',[ diff_variables_to_plot{i}])
             end
         else
             if stress_deflection_input == 0
@@ -138,12 +145,12 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
                 set(get(h,'ylabel'),'string',[diff_variables_to_plot{i} ' [m]'])
             end
         end
-        latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
-        ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
-        set(ax,'Visible','off');
-        set(findall(gca, 'type', 'text'), 'visible', 'on')
-        geoshow(Z, refvec, 'DisplayType', 'texture');
-        plotm(coastlat,coastlon);
+%         latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
+%         ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
+%         set(ax,'Visible','off');
+%         set(findall(gca, 'type', 'text'), 'visible', 'on')
+%         geoshow(Z, refvec, 'DisplayType', 'texture');
+%         plotm(coastlat,coastlon);
         if visco_choice == 0
             title({['Map of the ' ref_system ' ' quantity ' difference for part with depth range '],...
                 [num2str(min_depth) '-' num2str(max_depth) 'km and component ' diff_variables_to_plot{i} ','],...
@@ -174,6 +181,7 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
                 '_' num2str(iteration_2) ']_[' num2str(step_1) '_' num2str(step_2)...
                 ']_[' num2str(cycle_1) '_' num2str(cycle_2) '].png']);
         end
+        figure_counter = figure_counter + 1;
     end
 end
 

@@ -7,7 +7,7 @@ import pandas as pd
 
 def element_tracker(base_path, area_params):
     files_to_check = []
-    headers = ['Label', 'Mises', 'S11', 'S22', 'S33', 'S12', 'S13', 'S23', 'Viscosity']
+    headers = ['Lat', 'Lon', 'Mises', 'S11', 'S22', 'S33', 'S12', 'S13', 'S23', 'Viscosity']
     cycle_dir_counter = 0
     min_lat = area_params[0]
     max_lat = area_params[1]
@@ -43,7 +43,7 @@ def element_tracker(base_path, area_params):
                                 #     for cf in os.listdir(coupled_path):
                                 #         if cf == 'EARTH.csv':
                                 #             files_to_check.append(os.path.join(coupled_path, cf)
-            element_table = np.zeros((len(files_to_check), 9))
+            element_table = np.zeros((len(files_to_check), 10))
             iter_numbers = np.zeros((len(files_to_check), 3))
             count = 0
             for name in files_to_check:
@@ -78,9 +78,12 @@ def element_tracker(base_path, area_params):
                     b_index = int(matrix[max_index, 0]) - 1
                     viscosity = mises/(3*(b_diff[b_index] * mises + b_disl[b_index] * mises ** 3.5))
 
-                    stresses = matrix[max_index]
-                    stresses = stresses[:, 0:8]
-                    value_vector = np.hstack((stresses, viscosity))
+                    maximum_stress_row = matrix[max_index]
+                    stresses = maximum_stress_row[:, 1:8]
+                    element_latitude = matrix[max_index, -2]
+                    element_longitude = matrix[max_index, -1]
+                    # pdb.set_trace()
+                    value_vector = np.hstack((element_latitude, element_longitude, stresses, viscosity))
                     element_table[count, :] = value_vector
                 data = [float(s) for s in re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[ee][+-]?\d+)?", name)]
                 data = np.array([float(x) for x in data])

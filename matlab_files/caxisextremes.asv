@@ -165,10 +165,10 @@
                 lon_condition = lon>min_lon & lon<max_lon;
                 data_points_indices = complete_matrix_B(depth_condtion...
                     & lat_condition & lon_condition);
-                selected_columns = [alin(data_points_indices,:),a(data_points_indices,:)];
+                selected_columns = [alin,a];
                 
-                %condition_matrix = complete_matrix_B(data_points_indices,:);
-                for m = 1:size(selected_columns,2)
+                condition_matrix = complete_matrix_B(data_points_indices,:);
+                for m = size(selected_columns,2):-1:1
                     variable = selected_columns(:,m);
                     variable_extremes = [min(variable),max(variable)];
                     B_extremes_matrix(l,2*m-1:2*m) = variable_extremes;

@@ -1,7 +1,7 @@
 % Script to compare results from my run and Bas'
 clear all; close all; clc;
 extension = '.dat';
-my_files_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files';
+my_files_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python\bas_comparison_files\july';
 bas_files_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\ABAQUS_3D_GIA_model\Input_output_standard_run\dat_files';
 dat_names = ...
     {strcat('Deflection0',extension),strcat('Deflection9',extension),strcat('Deflection10',extension),...
@@ -32,7 +32,7 @@ for i = 1:length(dat_names)
     end
     
     figure(i)
-    surf(lon_vector_plot,lat_vector_plot,bas_file, 'edgecolor', 'none')
+    surf(lon_vector_plot,lat_vector_plot,diff_matrix, 'edgecolor', 'none')
     axis([lon_vector_plot(end) lon_vector_plot(1) lat_vector_plot(end) lat_vector_plot(1)])
     set(gca,'Xtick',lon_vector_plot(end):20:lon_vector_plot(1))
     set(gca,'Ytick',lat_vector_plot(end):10:lat_vector_plot(1))
