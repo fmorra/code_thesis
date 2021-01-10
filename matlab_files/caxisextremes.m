@@ -1,12 +1,17 @@
- function [new_colorbarlimits] = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components,~,viscosity_input,b_input,python_base_path)
+ function [new_colorbarlimits] = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,...
+     depths_to_plot,selected_components,~,viscosity_input,b_input,python_base_path,run_vec,...
+     coordinate_system)
 
-    runs = [21,22];
+    runs = run_vec;
     extremes_matrix = zeros(length(runs),2*length(selected_components));
     new_colorbarlimits = zeros(1,size(extremes_matrix,2));
     for run=1:length(runs)
         run_folder = [python_base_path '\run_' num2str(runs(run))];
-        list = dir([run_folder '\**\Geographical_complete_file_EARTH.csv']);
+        if strcmp(coordinate_system,'cartesian') == 1
+            list = dir([run_folder '\**\Complete_file_EARTH.csv']);
+        else
+            list = dir([run_folder '\**\Geographical_complete_file_EARTH.csv']);
+        end
         names = extractfield(list,'name');
         names_paths = extractfield(list,'folder');
         full_stress_files = cell(length(names), 1);

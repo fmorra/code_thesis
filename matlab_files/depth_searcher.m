@@ -1,7 +1,6 @@
 function [figure_counter] = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
     ~,figures_path,diff_matrix_path,iteration,step,cycle, min_lat,max_lat,...
-    min_lon,max_lon,depths_to_plot,run_folder,figure_counter,...
-    python_base_path,r_earth)
+    min_lon,max_lon,depths_to_plot,run_folder,figure_counter,python_base_path,run_vec)
 % This function is used to select the data points to plot by giving an
 % interval of points, as a substitute to the depth_classifier function.
 
@@ -45,7 +44,7 @@ if sd_input == 0
     selected_component = 'Mises S11 S12';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components, run_folder, viscosity_input,b_input,python_base_path);
+        selected_components, run_folder, viscosity_input,b_input,python_base_path,run_vec,coordinate_system);
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
         if strcmp(selected_components{k}, 'Mises') == 1
@@ -70,7 +69,8 @@ else
     selected_component = 'Magnitude U3';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components, run_folder, viscosity_input, python_base_path);
+        selected_components, run_folder, viscosity_input,b_input,python_base_path,run_vec,coordinate_system);
+    
     selected_columns = zeros(length(selected_components),1);
     for k = 1:length(selected_components)
         if strcmp(selected_components{k}, 'Magnitude') == 1
@@ -104,65 +104,32 @@ for i=1:length(parts_to_plot)
     data_points_indices = matrix_to_read(depth_condtion...
         & lat_condition & lon_condition); % Gives the indices
     
-%     [long,lati] = meshgrid(floor(min(lon)):resolution:ceil(max(lon)),...
-%         floor(min(lat)):resolution:ceil(max(lat)));
-%     lati=flipud(lati);
-%     start_lat = lati(1,1);
-%     start_lon = long(1,1);
-%     truncate_no_lat1 = floor((start_lat-latlim(2))*(1/resolution))+1;
-%     truncate_no_lat2 = floor((start_lat-latlim(1))*(1/resolution))+1;
-%     truncate_no_lon1 = floor((lonlim(1)-start_lon)*(1/resolution))+1;
-%     truncate_no_lon2 = floor((lonlim(2)-start_lon)*(1/resolution))+1;
-%     R = r_earth-depth(data_points_indices);
-    
-    matrix_for_difference = zeros(length(data_points_indices),length(selected_columns)+2);
-    matrix_for_difference_headers = [selected_components','Latitude','Longitude'];
+    matrix_for_difference = zeros(length(data_points_indices),length(selected_columns)+3);
+    matrix_for_difference_headers = [selected_components','Latitude','Longitude','Depth'];
     for j = 1:length(selected_columns)
         plot_variable = matrix_to_read(data_points_indices,selected_columns(j));
         filtered_lat = lat(data_points_indices);
         filtered_lon = lon(data_points_indices);
         depth_out = depth(data_points_indices);
         filtered_R = s.Radius - 1e3*depth_out;
-        matrix_for_difference(:,end-2) = plot_variable;
-        matrix_for_difference(:,end-1) = filtered_lat;
-        matrix_for_difference(:,end) = filtered_lon;
+        matrix_for_difference(:,end-3) = plot_variable;
+        matrix_for_difference(:,end-2) = filtered_lat;
+        matrix_for_difference(:,end-1) = filtered_lon;
+        matrix_for_difference(:,end) = depth_out;
         
-%         plot_variable_grid = griddata(lon(data_points_indices),lat(data_points_indices)...
-%             ,plot_variable,long,lati,'linear');
-%         if latlim(1)==-90
-%             truncate_no_lat2 = length(plot_variable_grid(:,1));
-%         end
-%         if lonlim(1)==-180
-%             truncate_no_lon1 = 1;
-%         end
-%         if lonlim(2)==180
-%             truncate_no_lon2 = length(plot_variable_grid(1,:));
-%         end
-%         plot_variable = reshape(plot_variable_grid(truncate_no_lat1:truncate_no_lat2,...
-%             truncate_no_lon1:truncate_no_lon2),[numel(gridded_lon),1]);
-%         
-%         figure(figure_counter)
-%         [Z, refvec] = geoloc2grid(plot_lat,plot_lon,plot_variable,resolution);
-%         refvec(2) = start_lat - (truncate_no_lat1-1)*resolution;
-%         refvec(3) = start_lon + (truncate_no_lon1-1)*resolution;
-%         load coastlines;
-%         latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
-%         ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
-%         set(ax,'Visible','off');
-%         cmap = colormap('summer');
-%         alpha 0.7;
-%         colormap(cmap);
-%         set(findall(gca, 'type', 'text'), 'visible', 'on')
-%         geoshow(Z, refvec, 'DisplayType', 'texture');
-%         plotm(coastlat,coastlon, 'color', rgb('OrangeRed'));
-%         R_lin = R*ones(length(plot_lon),1);
         [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
         [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
-
-        figure(1)
-        scatter3(x_in,y_in,z_in,10,z_in)
+        
+        visual_check = figure();
+        scatter3(x_in,y_in,z_in,10)
+        xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
+        title(['Distribution of points for the [' num2str(min_depth) '-' num2str(max_depth) '] km range']);
+        grid on;
+        saveas(gcf,[figures_path '\visual_mesh_check_depth_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
+        close(visual_check);
+        
         plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
-        figure(figure_counter+1)
+        figure(figure_counter)
         colormap summer;
         load coastlines;
         [Z, refvec] = geoloc2grid(lat_plot_2,lon_plot_2,plot_variable_out,resolution);

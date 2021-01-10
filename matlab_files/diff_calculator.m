@@ -4,9 +4,29 @@ function [figure_counter] = diff_calculator(diff_matrix_path_incomplete,min_lat,
 % [1 0 1 145 150]
 % [1 0 2 145 150]
 
-visco_choice = 0;
+resolution = 0.25;
+latlim = [min_lat max_lat];
+lonlim = [min_lon max_lon];
+min_depth = depths_to_plot(1);
+max_depth = depths_to_plot(2);
+s = referenceSphere('Earth');
+lat_lin = max_lat:-resolution:min_lat;
+lon_lin = min_lon:resolution:max_lon;
+[gridded_lon,gridded_lat] = meshgrid(lon_lin,lat_lin);
+% plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
+% plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
+r_out = []; lon_plot_2 = []; lat_plot_2 = [];
+depthrange = min_depth:1:max_depth;
+for dd = depthrange
+    lon_plot_2 = [lon_plot_2; gridded_lon(:)];
+    lat_plot_2 = [lat_plot_2; gridded_lat(:)];
+    temp = (s.Radius-dd*1e3)*ones(size(gridded_lon));
+    r_out = [r_out; temp(:)];
+end
+
+visco_choice = 1;
 if visco_choice == 0
-    stress_deflection_input = 1;
+    stress_deflection_input = 0;
     ref_system_input = 1;
     if stress_deflection_input == 0
         quantity = 'stresses';
@@ -101,6 +121,7 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
     [values_1,headers_1,~] = xlsread([diff_matrix_path '\' file_to_read_1]);
     [values_2,headers_2,~] = xlsread([diff_matrix_path '\' file_to_read_2]);
     possible_variables_for_plotting = intersect(headers_1,headers_2, 'stable');
+    possible_variables_for_plotting{end-2} = {}; 
     possible_variables_for_plotting{end-1} = {};
     possible_variables_for_plotting{end} = {};
     possible_variables_for_plotting = possible_variables_for_plotting(~cellfun('isempty',possible_variables_for_plotting));
@@ -108,28 +129,30 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
         ' two cycles are:\n']);
     disp(possible_variables_for_plotting);
     diff_variables_to_plot = possible_variables_for_plotting;
-    lat = values_1(:,end-1);
-    lon = values_1(:,end);
+    filtered_lat = values_1(:,end-2);
+    filtered_lon = values_1(:,end-1);
+    depth_out = values_1(:,end);
+    filtered_R = s.Radius - 1e3*depth_out;
     for i=1:length(diff_variables_to_plot)
         diff_variable_1 = values_1(:,strcmp(headers_1,diff_variables_to_plot{i}));
         diff_variable_2 = values_2(:,strcmp(headers_2,diff_variables_to_plot{i}));
         diff = diff_variable_2-diff_variable_1;
-        latlim = [min_lat max_lat];
-        lonlim = [min_lon max_lon];
+        [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
+        [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
+        plot_variable_out = griddata(x_in,y_in,z_in,diff,x_out,y_out,z_out,'nearest');
+        
         figure(figure_counter)
-        worldmap(latlim,lonlim);
-        load coastlines;
-        [LatGrid, LonGrid] = meshgrid(linspace(min(lat), max(lat),500), ...
-            linspace(min(lon), max(lon),400));
-        if visco_choice == 1
-            diff_grid = griddata(lat, lon, diff, LatGrid, LonGrid,'v4');
-        else
-            diff_grid = griddata(lat, lon, diff, LatGrid, LonGrid,'v4');
-        end
-        surfm(LatGrid, LonGrid, diff_grid);
         colormap summer;
+        load coastlines;
+        [Z, refvec] = geoloc2grid(lat_plot_2,lon_plot_2,plot_variable_out,resolution);
+        ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
+        set(ax,'Visible','off');
+        cmap = colormap('summer');
+        alpha 0.7;
+        colormap(cmap);
+        set(findall(gca, 'type', 'text'), 'visible', 'on')
+        geoshow(Z, refvec, 'DisplayType', 'texture');
         plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
-        camroll(180)
         caxis('auto'); % was [0 1e6]
         h = colorbar('v'); %set(h, 'ylim', [0 1e6]);
         if visco_choice == 1

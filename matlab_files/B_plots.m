@@ -1,9 +1,9 @@
 function [] = B_plots(viscosity_figures_path,alin,a,data_points_indices,part,...
     min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run,run_folder,...
-    viscosity_input,python_base_path,depth)
+    viscosity_input,python_base_path,depth,run_vec)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
-
+close all; clc;
 variables = [alin,a];
 names = {'B_{diff}','B_{disl}'};
 open_figures = findobj('type','figure');
@@ -31,7 +31,7 @@ for dd = depthrange
     r_out = [r_out; temp(:)];
 end
 colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components,run_folder,viscosity_input,b_input,python_base_path);
+        selected_components,run_folder,viscosity_input,b_input,python_base_path,run_vec);
 for i=1:size(variables,2)
     plot_variable = variables(data_points_indices,i);
     filtered_lat = lat(data_points_indices);
@@ -42,10 +42,9 @@ for i=1:size(variables,2)
     [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
     latlim = [min_lat max_lat];
     lonlim = [min_lon max_lon];
-    fig_counter = length(open_figures)+i;
     plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
     
-    figure(fig_counter)
+    figure(i)
     colormap summer;
     load coastlines;
     [Z, refvec] = geoloc2grid(lat_plot_2,lon_plot_2,plot_variable_out,resolution);

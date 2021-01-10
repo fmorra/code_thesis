@@ -1,6 +1,7 @@
 function [figure_counter,visco_diff_path] = visco_plotter(sd_input,python_variables_base_path,coordinate_system, ...
     complete_matrices_path,report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-    iteration,step,cycle,diff_matrix_path,run_folder,run,figure_counter,python_base_path,r_earth)
+    iteration,step,cycle,diff_matrix_path,run_folder,run,figure_counter,...
+    python_base_path,run_vec)
 close all; clc;
 % disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
 parts_to_plot = {'EARTH'};
@@ -61,7 +62,8 @@ for i=1:length(parts_to_plot)
     end
     selected_components = cellstr(quantity);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-        selected_components,run_folder,viscosity_input,b_input,python_base_path);
+        selected_components,run_folder,viscosity_input,b_input,python_base_path,run_vec,...
+        coordinate_system);
     e = readmatrix(e_path);
     elements = e(:,1);
     alin = e(:,2);
@@ -92,8 +94,8 @@ for i=1:length(parts_to_plot)
     data_points_indices = matrix_to_read(depth_condtion...
         & lat_condition & lon_condition);
     
-    matrix_for_difference = zeros(length(data_points_indices),3);
-    matrix_for_difference_headers = {quantity,'Latitude','Longitude'};
+    matrix_for_difference = zeros(length(data_points_indices),4);
+    matrix_for_difference_headers = {quantity,'Latitude','Longitude','Depth'};
     if visco_strain_input == 0
         plot_variable = matrix_to_read(data_points_indices,end-2);
         plot_variable = log10(plot_variable);
@@ -104,9 +106,10 @@ for i=1:length(parts_to_plot)
     filtered_lon = lon(data_points_indices);
     depth_out = depth(data_points_indices);
     filtered_R = s.Radius - 1e3*depth_out;
-    matrix_for_difference(:,end-2) = plot_variable;
-    matrix_for_difference(:,end-1) = filtered_lat;
-    matrix_for_difference(:,end) = filtered_lon;
+    matrix_for_difference(:,end-3) = plot_variable;
+    matrix_for_difference(:,end-2) = filtered_lat;
+    matrix_for_difference(:,end-1) = filtered_lon;
+    matrix_for_difference(:,end) = depth_out;
     
 %     filtered_R = R*ones(length(filtered_lon),1);
 %     R_lin = R*ones(length(plot_lon),1);
@@ -190,12 +193,13 @@ for i=1:length(parts_to_plot)
     matrix_for_difference_wheaders = [matrix_for_difference_headers; num2cell(matrix_for_difference)];
     writecell(matrix_for_difference_wheaders,[visco_diff_path '\Iteration_' iteration '_step_' step ...
         '_cycle_' cycle '_' num2str(min_depth) '_' num2str(max_depth) '_km.csv']);
+    
 end
 for i=1:length(parts_to_plot)
     B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
         min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run,...
-        run_folder,viscosity_input,python_base_path,depth);
+        run_folder,viscosity_input,python_base_path,depth,run_vec);
 end
-
+figure_counter = figure_counter+3;
 end
 
