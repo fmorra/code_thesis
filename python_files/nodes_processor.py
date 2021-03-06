@@ -6,18 +6,13 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
     import csv
     import pdb
 
-    # Define the relevant paths and if necessary create relevant directories
     large_node_matrix_path = os.path.join(common_files_path, 'Large_Node_Matrix.csv')
     individual_path = os.path.join(common_files_path, 'Individual_part_values')
-    # individual_node_path = os.path.join(individual_path, 'Nodes')
     if not os.path.exists(individual_path):
         os.makedirs(individual_path)
-
-    # Define node labels and initialize matrix with all node data
     headers = ['Label', 'X', 'Y', 'Z']
     large_node_matrix = []
 
-    # Run the algorithm if the last file to be created is not already there
     if os.path.isfile(large_node_matrix_path):
         print ('The files containing the node coordinates already exist, moving on'
                ' to element nodes extraction for each part.')
@@ -61,6 +56,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
                             as f_write:
                         writer = csv.writer(f_write)
                         writer.writerows(individual_matrix)
+
         # Use dictionaries to sort all the nodes, then save the sorted node list for all parts
         node_dictionary = {}
         for node_matrix in large_node_matrix:

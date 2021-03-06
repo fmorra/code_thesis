@@ -24,10 +24,10 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     centroid_files_path = os.path.join(stress_part_values, 'Centroids')
     if not os.path.exists(centroid_files_path):
         os.mkdir(centroid_files_path)
-    complete_files_path = os.path.join(stress_part_values, 'Complete_Files')
+    complete_files_path = os.path.join(stress_part_values, 'Complete_files')
     if not os.path.exists(complete_files_path):
         os.mkdir(complete_files_path)
-    geographical_complete_files_path = os.path.join(stress_part_values, 'Geographical_Complete_Files')
+    geographical_complete_files_path = os.path.join(stress_part_values, 'Geographical_complete_files')
     if not os.path.exists(geographical_complete_files_path):
         os.mkdir(geographical_complete_files_path)
 
@@ -46,6 +46,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     # Decide whether to run the main algorithm or not based on the presence of the last file to be created
     # if os.path.isfile(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + coord_file[0:5] +
     #                                                               '.csv')):
+
     if os.path.isfile(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt')):
         print 'The files containing centroid stresses associated to the relative coordinates already exist, ' \
               'moving on to classification of stress values based on depth.'
@@ -66,6 +67,8 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                 if 'LOW' in csv_stress_files[file_to_evaluate]:
                     csv_stress_files[file_to_evaluate] = 'to_delete'
                 if 'I0' in csv_stress_files[file_to_evaluate]:
+                    csv_stress_files[file_to_evaluate] = 'to_delete'
+                if 'I1' in csv_stress_files[file_to_evaluate]:
                     csv_stress_files[file_to_evaluate] = 'to_delete'
             csv_stress_files = filter(lambda a: a != 'to_delete', csv_stress_files)
             for file_to_evaluate in range(len(csv_stress_files)):
@@ -179,31 +182,35 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                           complete_individual_path, part_file)
 
-    for csv_file in range(len(csv_stress_files)):
-        if csv_stress_files[csv_file] == 'EARTH.csv':
-            if not os.path.exists(os.path.join(complete_files_path, 'Complete_file_coupled_' +
-                                                                    csv_stress_files[csv_file])):
-                with open(os.path.join(complete_files_path, 'Complete_file_' + csv_stress_files[csv_file]),
-                          'r') as uncoupled_coordinate_read_obj:
-                    uncoupled_coordinate_matrix = uncoupled_coordinate_read_obj.readlines()
-                    uncoupled_coordinate_matrix = [line.strip() for line in uncoupled_coordinate_matrix[1:]]
-                    uncoupled_coordinate_matrix = [np.array([eval(i) for i in line.split(",")[:]])
-                                                   for line in uncoupled_coordinate_matrix]
-                    uncoupled_coordinate_matrix = np.array(uncoupled_coordinate_matrix)
-                with open(os.path.join(coupled_stress_folder, csv_stress_files[csv_file]), 'r') as coordinate_read_obj:
-                    individual_coordinate_matrix = coordinate_read_obj.readlines()
-                    individual_coordinate_matrix = [line.strip() for line in individual_coordinate_matrix[1:]]
-                    individual_coordinate_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in
-                                                    individual_coordinate_matrix]
-                    individual_coordinate_matrix = np.array(individual_coordinate_matrix)
-                final_coupled_matrix = np.hstack((individual_coordinate_matrix, uncoupled_coordinate_matrix[:, 8:]))
-                with open(os.path.join(complete_files_path, 'Complete_file_coupled_' + csv_stress_files[csv_file]),
-                          'wb') as f_write:
-                    writer = csv.writer(f_write)
-                    writer.writerow(complete_headers)
-                    writer.writerows(final_coupled_matrix)
-    with open(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt'), 'wb') as f_write:
-        f_write.write('Stress association completed.')
+        for csv_file in range(len(csv_stress_files)):
+            if csv_stress_files[csv_file] == 'EARTH.csv':
+                if not os.path.exists(os.path.join(complete_files_path, 'Geographical_complete_file_coupled_' +
+                                                                        csv_stress_files[csv_file])):
+                    with open(os.path.join(complete_files_path, 'Complete_file_' + csv_stress_files[csv_file]),
+                              'r') as uncoupled_coordinate_read_obj:
+                        uncoupled_coordinate_matrix = uncoupled_coordinate_read_obj.readlines()
+                        uncoupled_coordinate_matrix = [line.strip() for line in uncoupled_coordinate_matrix[1:]]
+                        uncoupled_coordinate_matrix = [np.array([eval(i) for i in line.split(",")[:]])
+                                                       for line in uncoupled_coordinate_matrix]
+                        uncoupled_coordinate_matrix = np.array(uncoupled_coordinate_matrix)
+                    with open(os.path.join(coupled_stress_folder, csv_stress_files[csv_file]), 'r') as coordinate_read_obj:
+                        individual_coordinate_matrix = coordinate_read_obj.readlines()
+                        individual_coordinate_matrix = [line.strip() for line in individual_coordinate_matrix[1:]]
+                        individual_coordinate_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in
+                                                        individual_coordinate_matrix]
+                        individual_coordinate_matrix = np.array(individual_coordinate_matrix)
+                    final_coupled_matrix = np.hstack((individual_coordinate_matrix, uncoupled_coordinate_matrix[:, 8:]))
+                    complete_individual_path_coupled = os.path.join(complete_files_path, 'Complete_file_coupled_' +
+                                                                    csv_stress_files[csv_file])
+                    with open(complete_individual_path_coupled, 'wb') as f_write:
+                        writer = csv.writer(f_write)
+                        writer.writerow(complete_headers)
+                        writer.writerows(final_coupled_matrix)
+                    rotate_tensor(final_coupled_matrix, geographical_complete_files_path, headers_on, complete_headers,
+                                  complete_individual_path_coupled, 'coupled_' + csv_stress_files[csv_file])
+
+        with open(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt'), 'wb') as f_write:
+            f_write.write('Stress association completed.')
 
     return centroid_files_path, complete_files_path, geographical_complete_files_path
 

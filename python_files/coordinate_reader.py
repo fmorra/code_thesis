@@ -53,9 +53,9 @@ def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processin
     else:
         start_time_complete_deflections = time.time()
         complete_files_path, geographical_complete_files_path = associate_deflection_coord(deflection_path,
-                                                                                        individual_node_path,
-                                                                                        headers_on,
-                                                                                        deflection_processing_path)
+                                                                                           individual_node_path,
+                                                                                           headers_on,
+                                                                                           deflection_processing_path)
         end_time_complete_deflections = time.time() - start_time_complete_deflections
         if end_time_complete_deflections < 1:
             print 'The time spent to create the complete deflection files for each part and region is less than ' \

@@ -22,7 +22,6 @@ def dat_processor(fname):
         region_finisher_key = '*Nset'
         input_paragraph_end = 'OPTIONS BEING PROCESSED'
         line_counter = 0
-        end_line = 0
         end_line_counter = 0
         # Iterate over each line of the dat file to find whether the keywords or keyphrases are contained in it, and if
         # so, save the number of those lines. Again, extract the names of all of the model parts as they will be used to
@@ -50,7 +49,6 @@ def dat_processor(fname):
                 part_lines.append(line_counter)
                 file_identifiers.append(line.split(": ")[1].rstrip().replace(".", "_"))
             elif end_keyword_flag != -1:
-                end_line = line
                 end_line_counter = line_counter
                 break
             else:
@@ -68,8 +66,3 @@ def dat_processor(fname):
                 new_read_dat.write(replacements)
 
     return node_lines, elem_lines, nset_lines, file_identifiers, new_earth_dat
-
-
-
-
-

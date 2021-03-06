@@ -1,4 +1,4 @@
-def stress_report_reader(report_file, search_key, stress_matrices_path, headers_on):
+def stress_report_reader(report_file, stress_matrices_path, headers_on):
 
     import os
     import csv
@@ -6,7 +6,6 @@ def stress_report_reader(report_file, search_key, stress_matrices_path, headers_
     import re
     import pdb
 
-    # Try to open the report file
     opened_report = 0
     try:
         stress_report = open(report_file, "r")
@@ -20,6 +19,7 @@ def stress_report_reader(report_file, search_key, stress_matrices_path, headers_
     file_identifiers = []
     headers = []
     line_counter = 0
+    search_key = 'reported at element'
     headers_key = 'S.Mises'
 
     # Loop over each line of the rpt file
@@ -36,9 +36,6 @@ def stress_report_reader(report_file, search_key, stress_matrices_path, headers_
             lines.append(line_counter)
             csv_name = line.split(': ')[1].rstrip().replace(".", "_")
             file_identifiers.append(csv_name)
-        # If we also want to extract the headers for all the columns, find the header key in each file row and if it is
-        # found extract the line after the word "Element" stripping it of the newline and then substitute the dots
-        # with underscores.
         headers_index = line.find(headers_key)
         if headers_index != -1:
             headers_line = line.split('Element ')[1].rstrip().replace(".", "_")
@@ -63,75 +60,50 @@ def stress_report_reader(report_file, search_key, stress_matrices_path, headers_
             if i + 1 < len(lines):
                 # Define the lines where to search for stresses
                 search_lines = np.arange(lines[i], lines[i+1], 1)
-                line_counter = 0
-                # Iterate over these lines searching for float values
-                for line in opened_report:
-                    line_counter += 1
-                    if line_counter in search_lines:
-                        s = line.strip()
-                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
-                        # If the data vector is composed of 8 elements, fill the matrix containing the stress values
-                        # with it
-                        if len(data) > 7:
-                            stress_submatrix.append(np.array([float(x) for x in data]))
-                # Save the matrix containing the stress values for each part and region differentiating between whether
-                # we want headers or not
-                if headers_on == 1:
-                    with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                        writer = csv.writer(f_write)
-                        writer.writerow(headers)
-                        writer.writerows(stress_submatrix)
-                else:
-                    with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                        writer = csv.writer(f_write)
-                        writer.writerows(stress_submatrix)
-                if 'Region' in file_identifiers[i]:
-                    large_stress_matrix.append(stress_submatrix)
             else:
                 # For the last region, iterate until the end of the file, then the rest works the same as before
                 search_lines = np.arange(lines[i], len(opened_report), 1)
-                line_counter = 0
-                for line in opened_report:
-                    line_counter += 1
-                    if line_counter in search_lines:
-                        s = line.strip()
-                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[ee][+-]?\d+)?", s)
-                        # if the data is not empty, fill the matrix containing the stress values with it
-                        if len(data) > 7:
-                            stress_submatrix.append(np.array([float(x) for x in data]))
+            line_counter = 0
+            for line in opened_report:
+                line_counter += 1
+                if line_counter in search_lines:
+                    s = line.strip()
+                    data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
+                    if len(data) > 7:
+                        stress_submatrix.append(np.array([float(x) for x in data]))
 
-                if headers_on == 1:
-                    with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                        writer = csv.writer(f_write)
-                        writer.writerow(headers)
-                        writer.writerows(stress_submatrix)
-                else:
-                    with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                        writer = csv.writer(f_write)
-                        writer.writerows(stress_submatrix)
-                if 'Region' in file_identifiers[i]:
-                    large_stress_matrix.append(stress_submatrix)
-            stress_dictionary = {}
-            for stress_matrix in large_stress_matrix:
-                for j in range(len(stress_matrix)):
-                    dictionary_matrix = stress_matrix[j]
-                    stress_dictionary[dictionary_matrix[0]] = dictionary_matrix[1:]
-            stress_ids = stress_dictionary.keys()
-            sorted_matrix = np.zeros((len(stress_ids), 8))
-            sorted_stress_ids = list(sorted(stress_ids))
-            for stress in range(len(sorted_stress_ids)):
-                sorted_matrix[stress, 0] = sorted_stress_ids[stress]
-                sorted_matrix[stress, 1:] = stress_dictionary[sorted_stress_ids[stress]]
             if headers_on == 1:
-                with open(os.path.join(large_stress_matrix_path), 'wb') as f_write:
+                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerow(headers)
-                    writer.writerows(sorted_matrix)
+                    writer.writerows(stress_submatrix)
             else:
-                with open(os.path.join(large_stress_matrix_path), 'wb') as f_write:
+                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
                     writer = csv.writer(f_write)
-                    writer.writerows(sorted_matrix)
-    stress_report.close()
-    return file_identifiers, headers
+                    writer.writerows(stress_submatrix)
+            if 'Region' in file_identifiers[i]:
+                large_stress_matrix.append(stress_submatrix)
+
+        stress_dictionary = {}
+        for stress_matrix in large_stress_matrix:
+            for j in range(len(stress_matrix)):
+                dictionary_matrix = stress_matrix[j]
+                stress_dictionary[dictionary_matrix[0]] = dictionary_matrix[1:]
+        stress_ids = stress_dictionary.keys()
+        sorted_matrix = np.zeros((len(stress_ids), 8))
+        sorted_stress_ids = list(sorted(stress_ids))
+        for stress in range(len(sorted_stress_ids)):
+            sorted_matrix[stress, 0] = sorted_stress_ids[stress]
+            sorted_matrix[stress, 1:] = stress_dictionary[sorted_stress_ids[stress]]
+        if headers_on == 1:
+            with open(os.path.join(large_stress_matrix_path), 'wb') as f_write:
+                writer = csv.writer(f_write)
+                writer.writerow(headers)
+                writer.writerows(sorted_matrix)
+        else:
+            with open(os.path.join(large_stress_matrix_path), 'wb') as f_write:
+                writer = csv.writer(f_write)
+                writer.writerows(sorted_matrix)
+
 
 

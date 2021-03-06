@@ -22,12 +22,14 @@ set(groot,'DefaultFigureVisible','off')
 python_base_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python';
 figure_counter = 1;
 
-% run_vec = [21,22,25,26];
+% run_vec = [25];
 % iteration = '1';
 % step_vec = [0 1];
+% simul_time_vec = {'1 ka','31 ka'}; % Update for new timesteps
 % for i = 1:length(run_vec)
 %     run = num2str(run_vec(i));
 %     for j=1:length(step_vec)
+%         simul_time = simul_time_vec{j};
 %         step = num2str(step_vec(j));
 %         step_folder = [python_base_path '\run_' run '\Iteration_' iteration...
 %             '\step_' step];
@@ -139,25 +141,25 @@ figure_counter = 1;
 %             max_lat = -65;
 %             min_lon = -180;
 %             max_lon = 180;
-%             depths_to_plot = [545 550];
+%             depths_to_plot = [145 160];
 %             if depths_to_plot(1) > depths_to_plot (2)
 %                 depths_to_plot([1 2]) = depths_to_plot([2 1]);
 %             end
-%             if plots_bool == 1
-%                 figure_counter = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
-%                     files_to_classify,figures_path,diff_matrix_path,iteration,step,cycle,...
-%                     min_lat,max_lat,min_lon,max_lon,depths_to_plot,run_folder,...
-%                     figure_counter,python_base_path,run_vec);
-%             end
+% %             if plots_bool == 1
+% %                 figure_counter = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
+% %                     files_to_classify,figures_path,diff_matrix_path,iteration,step,cycle,...
+% %                     min_lat,max_lat,min_lon,max_lon,depths_to_plot,run_folder,...
+% %                     figure_counter,python_base_path,run_vec,simul_time);
+% %             end
 %             viscosity_figures_path = [report_path '\viscosity_plots'];
 %             if ~exist(viscosity_figures_path, 'dir')
 %                 mkdir(viscosity_figures_path)
 %             end
-%             if sd_input == 0
-%                 [figure_counter, visco_diff_path] = visco_plotter(sd_input,python_variables_path,coordinate_system, complete_matrices_path,...
-%                     report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,iteration,step,cycle,...
-%                     diff_matrix_path,run_folder,run,figure_counter,python_base_path,run_vec);
-%             end
+% %             if sd_input == 0
+% %                 [figure_counter, visco_diff_path] = visco_plotter(sd_input,python_variables_path,coordinate_system, complete_matrices_path,...
+% %                     report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,iteration,step,cycle,...
+% %                     diff_matrix_path,run_folder,run,figure_counter,python_base_path,run_vec,simul_time);
+% %             end
 %             figure_counter = diff_calculator(diff_matrix_path,min_lat,max_lat,min_lon,max_lon,...
 %                 run,depths_to_plot,iteration,step,figure_counter);
 %         end
@@ -165,14 +167,20 @@ figure_counter = 1;
 % end
 
 
-%% Singe run case
-run = '21';
-run_vec = str2double(run);
+% %% Singe run case
+run = '25';
+run_vec = [21,22,25,26];
 iteration = '1';
 step = '0';
-cycle = '1';
+simul_time = '1 ka'; % '31 ka'
+cycle = '2';
 coordinate_system = 'geographical'; % cartesian or geographical
-quantity = 'stresses'; %stresses or deflections
+quantity = 'deflections'; %stresses or deflections
+min_lat = -90;
+max_lat = -65;
+min_lon = -180;
+max_lon = 180;
+depths_to_plot = [96 123];
 % python_variables_path = [python_variables_base_path '\run_' run '\iteration_' iteration];
 python_variables_path = [python_base_path '\run_' run '\Iteration_' iteration...
     '\step_' step '\cycle_' cycle '_reports'];
@@ -197,7 +205,6 @@ file_to_open_path = [python_variables_path '\' file_to_open];
 opened_file = fopen(file_to_open_path);
 
 i = 1;
-j = 1;
 files_to_classify = {};
 plotting_params = zeros(1,6);
 while ~feof(opened_file)
@@ -219,23 +226,16 @@ while ~feof(opened_file)
     if isempty(extractAfter(s, '_reports')) && contains(s, 'Iteration_')
         report_path  = s;
     end
-    if contains(s, 'Depth') == 1
-        classified_path = s;
-    end
-    if strcmp(s, 'cartesian')== 1 || strcmp(s, 'geographical')== 1
-        components_to_plot = s;
-    end
     % if contains(s, 'Complete') == 1 || contains(s, 'geographical_complete')
     if contains(s, 'omplete') == 1 
         complete_matrices_path = s;
     end
-    if abs(str2double(s)) > 1 && ~isnan(str2double(s))
-        plotting_params(j) = str2double(s);
-        j = j + 1;
-    end
     i = i + 1;
 end
 
+if depths_to_plot(1) > depths_to_plot (2)
+    depths_to_plot([1 2]) = depths_to_plot([2 1]);
+end
 if sd_input == 0
     matrix_to_read_part = 'Stresses_layer_';
     figure_folder = 'stress_plots';
@@ -259,60 +259,42 @@ while while_check == 1
     end
 end
 
-diff_matrix_path = [python_base_path '\run_' run '\difference_matrices_plots\matrices'];
+diff_matrix_path = [python_base_path '\run_' run '\difference_matrices_plots'];
 if ~exist(diff_matrix_path, 'dir')
     mkdir(diff_matrix_path)
 end
 
-python_bool = input(['Do you want to use the Python plotting ranges? \n'...
-        'Enter 1 if yes, 0 if no: \n']);
-if python_bool == 1
-    min_lat = plotting_params(1);
-    max_lat = plotting_params(2);
-    min_lon = plotting_params(3);
-    max_lon = plotting_params(4);
-    depths_to_plot = [plotting_params(5) plotting_params(6)];
-else
-    min_lat = -90;
-    max_lat = -65;
-    min_lon = -180;
-    max_lon = 180;
-    depths_to_plot = [545 550];
-end
-if depths_to_plot(1) > depths_to_plot (2)
-    depths_to_plot([1 2]) = depths_to_plot([2 1]);
-end
 if plots_bool == 1
     figure_counter = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
         files_to_classify,figures_path,diff_matrix_path,iteration,step,cycle,min_lat,max_lat,...
-        min_lon,max_lon,depths_to_plot,run_folder,figure_counter,python_base_path,run_vec);
+        min_lon,max_lon,depths_to_plot,run_folder,figure_counter,python_base_path,run_vec,simul_time);
 end
 
 %% Viscosity 
+if strcmp(quantity,'stresses') == 1
+    visco_check = 1;
+    while visco_check == 1
+        visco_plots_bool = input(['Do you want to plot the viscosity/strain rate? \n'...
+            'Enter 1 for plots, 0 to skip them: \n']);
+        if visco_plots_bool == 1 || visco_plots_bool == 0
+            visco_check = 0;
+        else
+            disp('Incorrect input, enter 1 for the viscosity or strain rate plots or 0 to skip this step:\n');
+        end
+    end
     
-visco_check = 1;
-while visco_check == 1
-    visco_plots_bool = input(['Do you want to plot the viscosity/strain rate? \n'...
-        'Enter 1 for plots, 0 to skip them: \n']);
-    if visco_plots_bool == 1 || visco_plots_bool == 0
-        visco_check = 0;
-    else
-        disp('Incorrect input, enter 1 for the viscosity or strain rate plots or 0 to skip this step:\n');
+    % Plots - viscosity
+    if visco_plots_bool == 1
+        viscosity_figures_path = [report_path '\viscosity_plots'];
+        if ~exist(viscosity_figures_path, 'dir')
+            mkdir(viscosity_figures_path)
+        end
+        [figure_counter, visco_diff_path] = visco_plotter(sd_input,python_variables_path,...
+            coordinate_system, complete_matrices_path, report_path,min_lat,max_lat,min_lon,...
+            max_lon,depths_to_plot,iteration,step,cycle,diff_matrix_path,run_folder,run,...
+            figure_counter,python_base_path,run_vec,simul_time);
     end
 end
-
-% Plots - viscosity
-if visco_plots_bool == 1
-    viscosity_figures_path = [report_path '\viscosity_plots'];
-    if ~exist(viscosity_figures_path, 'dir')
-        mkdir(viscosity_figures_path)
-    end
-    [figure_counter, visco_diff_path] = visco_plotter(sd_input,python_variables_path,...
-        coordinate_system, complete_matrices_path, report_path,min_lat,max_lat,min_lon,...
-        max_lon,depths_to_plot,iteration,step,cycle,diff_matrix_path,run_folder,run,...
-        figure_counter,python_base_path,run_vec);
-end
-
 %% Time difference plots 
 diff_check = 1;
 while diff_check == 1
@@ -323,7 +305,12 @@ while diff_check == 1
         disp('Incorrect input, enter 1 to generate difference plots or 0 to skip:\n');
     end
 end
-
+b_diff_plots_folder = [diff_matrix_path '\plots\viscosity\'];
+if ~exist(b_diff_plots_folder, 'dir')
+        mkdir(b_diff_plots_folder)
+end
+b_diff_calc(b_diff_plots_folder,python_base_path,min_lat,max_lat,...
+    min_lon,max_lon,depths_to_plot(1),depths_to_plot(2),figure_counter)
 if diff_input == 1
     figure_counter = diff_calculator(diff_matrix_path,min_lat,max_lat,min_lon,max_lon,...
                 run,depths_to_plot,iteration,step,figure_counter);

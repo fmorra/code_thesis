@@ -19,6 +19,7 @@ for i = 1:length(dat_names)
     disp([bas_files_path '\' dat_names{i}])
     lat_vector = linspace(-90,90,size(my_file,1));
     lon_vector = linspace(0,360,size(my_file,2));
+    
     lon_vector_plot = flip(lon_vector - 180);
     lat_vector_plot = flip(lat_vector);
     diff_matrix = my_file - bas_file;

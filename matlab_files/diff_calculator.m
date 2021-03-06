@@ -24,9 +24,9 @@ for dd = depthrange
     r_out = [r_out; temp(:)];
 end
 
-visco_choice = 1;
+visco_choice = 0;
 if visco_choice == 0
-    stress_deflection_input = 0;
+    stress_deflection_input = 1;
     ref_system_input = 1;
     if stress_deflection_input == 0
         quantity = 'stresses';
@@ -168,24 +168,21 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
                 set(get(h,'ylabel'),'string',[diff_variables_to_plot{i} ' [m]'])
             end
         end
-%         latlim = [min_lat max_lat];lonlim = [min_lon max_lon];
-%         ax = axesm('stereo','MapLatLimit',latlim,'MapLonLimit',lonlim,'Grid','on','MeridianLabel','on','ParallelLabel','on');
-%         set(ax,'Visible','off');
-%         set(findall(gca, 'type', 'text'), 'visible', 'on')
-%         geoshow(Z, refvec, 'DisplayType', 'texture');
-%         plotm(coastlat,coastlon);
         if visco_choice == 0
-            title({['Map of the ' ref_system ' ' quantity ' difference for part with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' diff_variables_to_plot{i} ','],...
-                ['iterations [' num2str(iteration_1) '-' num2str(iteration_2) '], steps ['...
-                num2str(step_1) '-' num2str(step_2) '], cycles [' num2str(cycle_1)...
-                '-' num2str(cycle_2) ']']});
+            if strcmp(diff_variables_to_plot{i},'Mises')
+                title('Map of value differences for the Mises stresses');
+            elseif strcmp(diff_variables_to_plot{i},'Magnitude')
+                title('Map of value differences for the deformation magnitude');
+            else
+                title({['Map of value differences for ' quantity ' component ' diff_variables_to_plot{i}]});
+            end
         else
-            title({['Map of the ' quantity ' difference for part with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km,' ],...
-                ['iterations [' num2str(iteration_1) '-' num2str(iteration_2) '], steps ['...
-                num2str(step_1) '-' num2str(step_2) '], cycles [' num2str(cycle_1)...
-                '-' num2str(cycle_2) ']']}); 
+%             title({['Map of the ' quantity ' difference for part with depth range '],...
+%                 [num2str(min_depth) '-' num2str(max_depth) 'km,' ],...
+%                 ['iterations [' num2str(iteration_1) '-' num2str(iteration_2) '], steps ['...
+%                 num2str(step_1) '-' num2str(step_2) '], cycles [' num2str(cycle_1)...
+%                 '-' num2str(cycle_2) ']']}); 
+            title({['Map of differences for the ' quantity ]});
         end
         set(findall(gca, 'type', 'text'), 'visible', 'on')
         grid on;

@@ -9,8 +9,9 @@ import csv
 import pdb
 
 
-def depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot, complete_files_path,
-                     geographical_complete_files_path, headers_on):
+def depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot, headers_on,
+                     file_extension, cartesian_classified_depth_path, geographical_classified_depth_path,
+                     files_to_classify_path, files_to_classify, histogram_path):
 
     # Here the data is discretized in a certain number of bins, and stored in different matrices for each of those bins.
     # Distinguish two cases, one for the stresses and one for the deflections, and define relevant variables
@@ -30,28 +31,15 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         earth_name_part = 'Deflections_Earth_'
         discretized_headers = ['Label', 'U_Magn', 'U_1', 'U_2', 'U_3', 'X', 'Y', 'Z', 'R', 'Depth', 'Lat', 'Lon']
 
-    # Define the extension we have to work with and the different paths containing cartesian or geographical components
-    file_extension = '.csv'
-    cartesian_classified_depth_path = os.path.join(upper_path, 'Depth_files')
-    geographical_classified_depth_path = os.path.join(upper_path, 'Geographical_depth_files')
-
     # Extract filenames and create folders based on the components we are working with
     if components_to_plot == 'geographical':
-        files_to_classify_path = geographical_complete_files_path
-        files_to_classify = [filename for filename in os.listdir(files_to_classify_path)
-                             if filename.endswith(file_extension)]
         classified_path = geographical_classified_depth_path
-        histogram_path = os.path.join(geographical_classified_depth_path, 'histogram_plots')
         if not os.path.exists(classified_path):
             os.mkdir(classified_path)
         if not os.path.exists(histogram_path):
             os.mkdir(histogram_path)
     elif components_to_plot == 'cartesian':
-        files_to_classify_path = complete_files_path
-        files_to_classify = [filename for filename in os.listdir(files_to_classify_path)
-                             if filename.endswith(file_extension)]
         classified_path = cartesian_classified_depth_path
-        histogram_path = os.path.join(cartesian_classified_depth_path, 'histogram_plots')
         if not os.path.exists(classified_path):
             os.mkdir(classified_path)
         if not os.path.exists(histogram_path):
@@ -61,7 +49,6 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
     # Only leave EARTH_POINT and EARTH_POINT_LOW as files to bin, because those are the ones that interest us. Do not
     # consider the region files as they have been all saved in a single Earth part file.
 
-    nan = np.nan
     for file_to_evaluate in range(len(files_to_classify)):
         if 'I0' in files_to_classify[file_to_evaluate]:
             files_to_classify[file_to_evaluate] = 'to_delete'
@@ -173,32 +160,30 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                 layer_data_matrix = [line.strip() for line in layer_data_matrix[1:]]
                 layer_data_matrix = [np.array([eval(j) for j in line.split(",")[:]]) for line in layer_data_matrix]
                 layer_data_matrix = np.array(layer_data_matrix)
-                depth_data = layer_data_matrix[:, -3]
-
+                depth_data = layer_data_matrix[:, -3]/1000
                 plt.figure(fig_counter)
                 plt.hist(depth_data, n_bins, edgecolor='k', linewidth=1)
-                plt.xlabel('Depth [m]')
+                plt.xlabel('Depth [km]')
                 plt.ylabel('Number of points')
                 plt.grid(axis='both', alpha=0.75)
                 if i == 0:
                     plt.title('Distribution of ' + str(histogram_name_part) +
-                              ' from the ABAQUS model at different depths for layer [0-' +
-                              str(re.compile(r'\d+').findall(layer_values_names[i])) + '] km')
-                    plt.savefig(os.path.join(histogram_path, 'Layer_[0-' +
-                                             str(re.compile(r'\d+').findall(layer_values_names[i]))
-                                             + ']_km_distribution.png'), bbox_inches='tight')
+                              ' from the ABAQUS model at different depths for a depth range of 0 to ' +
+                              filter(str.isdigit, layer_values_names[i]) + ' km')
+                    plt.savefig(os.path.join(histogram_path, 'Depth_range_0_' +
+                                             filter(str.isdigit, layer_values_names[i])
+                                             + '_km_distribution.png'), bbox_inches='tight')
                     fig_counter += 1
                 else:
                     plt.title('Distribution of ' + str(histogram_name_part) +
-                              ' from the ABAQUS model at different depths for layer [' +
-                              str(re.compile(r'\d+').findall(layer_values_names[i - 1])) + '-' +
-                              str(re.compile(r'\d+').findall(layer_values_names[i])) + '] km')
-                    plt.savefig(os.path.join(histogram_path, 'Layer_[' +
-                                             str(re.compile(r'\d+').findall(layer_values_names[i - 1])) + '-' +
-                                             str(re.compile(r'\d+').findall(layer_values_names[i])) +
-                                             ']_km_distribution.png'), bbox_inches='tight')
+                              ' from the ABAQUS model at different depths for a depth range of ' +
+                              filter(str.isdigit, layer_values_names[i - 1]) + ' to ' +
+                              filter(str.isdigit, layer_values_names[i]) + ' km')
+                    plt.savefig(os.path.join(histogram_path, 'Depth_range_' +
+                                             filter(str.isdigit, layer_values_names[i - 1]) + '-' +
+                                             filter(str.isdigit, layer_values_names[i]) +
+                                             '_km_distribution.png'), bbox_inches='tight')
                     fig_counter += 1
-
                 indices, bin_edges = python_discretizer(depth_data, i, layer_depth, n_bins)
                 for j in range(n_bins):
                     subdivision_matrix = layer_data_matrix[indices == j+1, :]
@@ -270,4 +255,3 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         plt.savefig(os.path.join(histogram_path, 'Complete_Earth_distribution.png'), bbox_inches='tight')
         fig_counter += 1
 
-    return classified_path, files_to_classify

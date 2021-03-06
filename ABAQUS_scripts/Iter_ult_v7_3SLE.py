@@ -356,63 +356,29 @@ while Num<=Res:   # We do not give a convergence condition because we know conve
                         if i + 1 < len(lines):
                             # Define the lines where to search for stresses
                             search_lines = np.arange(lines[i], lines[i+1], 1)
-                            line_counter = 0
-                            # Iterate over these lines searching for float values
-                            with open(report_file) as opened_report: 
-                                for line in opened_report:
-                                    line_counter += 1
-                                    if line_counter in search_lines:
-                                        s = line.strip()
-                                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
-                                        # If the data vector is composed of 8 elements, fill the matrix containing the stress values
-                                        # with it
-                                        if len(data) > 7:
-                                            stress_submatrix.append(np.array([float(x) for x in data]))
-                            # Save the matrix containing the stress values for each part and region differentiating between whether
-                            # we want headers or not
-                            print 'Saving csv file for part: ' + file_identifiers[i]
-                            if headers_on == 1:
-                                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerow(headers)
-                                    writer.writerows(stress_submatrix)
-                            else:
-                                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerows(stress_submatrix)
-                            if 'Region' in file_identifiers[i]:
-                                large_stress_matrix.append(stress_submatrix)
                         else:
                             # For the last region, iterate until the end of the file, then the rest works the same as before
-                            with open(report_file) as opened_report: 
-                                line_counter = 0
-                                for line in opened_report:
-                                    line_counter += 1
-                                last_line = line_counter
-                                line_counter = 0
-                                search_lines = np.arange(lines[i], last_line, 1)
-                                for line in opened_report:
-                                    line_counter += 1
-                                    if line_counter in search_lines:
-                                        s = line.strip()
-                                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[ee][+-]?\d+)?", s)
-                                        # if the data is not empty, fill the matrix containing the stress values with it
-                                        if len(data) > 7:
-                                            stress_submatrix.append(np.array([float(x) for x in data]))
-                            print 'Saving csv file for part: ' + file_identifiers[i]
-                            if headers_on == 1:
-                                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerow(headers)
-                                    writer.writerows(stress_submatrix)
-                            else:
-                                with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerows(stress_submatrix)
-                            if 'Region' in file_identifiers[i]:
-                                large_stress_matrix.append(stress_submatrix)
-                    opening_report_end_time = time.time() - opening_report_start_time
-                    print 'Time elapsed to open the reports is ' + str(opening_report_end_time)      
+                            search_lines = np.arange(lines[i], len(opened_report), 1)
+                        line_counter = 0
+                        for line in opened_report:
+                            line_counter += 1
+                            if line_counter in search_lines:
+                                s = line.strip()
+                                data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
+                                if len(data) > 7:
+                                    stress_submatrix.append(np.array([float(x) for x in data]))
+
+                        if headers_on == 1:
+                            with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
+                                writer = csv.writer(f_write)
+                                writer.writerow(headers)
+                                writer.writerows(stress_submatrix)
+                        else:
+                            with open(os.path.join(stress_matrices_path, file_identifiers[i] + ".csv"), 'wb') as f_write:
+                                writer = csv.writer(f_write)
+                                writer.writerows(stress_submatrix)
+                        if 'Region' in file_identifiers[i]:
+                            large_stress_matrix.append(stress_submatrix)      
                     
                     stress_dictionary = {}
                     for stress_matrix in large_stress_matrix:
@@ -545,59 +511,27 @@ while Num<=Res:   # We do not give a convergence condition because we know conve
                         deflection_submatrix = []
                         # Determine whether we are in the last region of the file or not
                         if i + 1 < len(lines):
-                            # Define the lines where to search for deflections
                             search_lines = np.arange(lines[i], lines[i+1], 1)
-                            line_counter = 0
-                            # Iterate over these lines searching for float values
-                            with open(report_file_deflections) as opened_report:
-                                print opened_report
-                                for line in opened_report:
-                                    line_counter += 1
-                                    if line_counter in search_lines:
-                                        s = line.strip()
-                                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
-                                        # If the data vector is composed of 5 elements, fill the matrix containing the stress values
-                                        # with it
-                                        if len(data) > 4:
-                                            deflection_submatrix.append(np.array([float(x) for x in data]))
-                            # Save the matrix containing the stress values for each part and region differentiating between whether
-                            # we want headers or not
-                            if headers_on == 1:
-                                with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerow(headers)
-                                    writer.writerows(deflection_submatrix)
-                            else:
-                                with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerows(deflection_submatrix)
                         else:
-                            # for the last region, iterate until the end of the file, then the rest works the same as before
-                            line_counter = 0
-                            with open(report_file_deflections) as opened_report:
-                                for line in opened_report:
-                                    line_counter += 1
-                                last_line = line_counter
-                                line_counter = 0
-                                search_lines = np.arange(lines[i], last_line, 1)
-                                for line in opened_report:
-                                    line_counter += 1
-                                    if line_counter in search_lines:
-                                        s = line.strip()
-                                        data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[ee][+-]?\d+)?", s)
-                                        # if the data is not empty, fill the matrix containing the stress values with it
-                                        if len(data) > 4:
-                                            deflection_submatrix.append(np.array([float(x) for x in data]))
-            
-                            if headers_on == 1:
-                                with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerow(headers)
-                                    writer.writerows(deflection_submatrix)
-                            else:
-                                with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
-                                    writer = csv.writer(f_write)
-                                    writer.writerows(deflection_submatrix)
+                            search_lines = np.arange(lines[i], len(opened_report), 1)
+                        line_counter = 0
+                        for line in opened_report:
+                            line_counter += 1
+                            if line_counter in search_lines:
+                                s = line.strip()
+                                data = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", s)
+                                if len(data) > 4:
+                                    deflection_submatrix.append(np.array([float(x) for x in data]))
+
+                        if headers_on == 1:
+                            with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
+                                writer = csv.writer(f_write)
+                                writer.writerow(headers)
+                                writer.writerows(deflection_submatrix)
+                        else:
+                            with open(os.path.join(deflection_matrices_paths, file_identifiers[i] + ".csv"), 'wb') as f_write:
+                                writer = csv.writer(f_write)
+                                writer.writerows(deflection_submatrix)
             
             end_time_reports = time.time() - start_time_reports
             print 'The time spent to read the stress and deflection reports and extract data from them is: ', end_time_reports, \

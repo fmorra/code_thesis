@@ -1,13 +1,16 @@
 function [figure_counter] = depth_searcher(run,sd_input,coordinate_system,complete_matrices_path,...
     ~,figures_path,diff_matrix_path,iteration,step,cycle, min_lat,max_lat,...
-    min_lon,max_lon,depths_to_plot,run_folder,figure_counter,python_base_path,run_vec)
+    min_lon,max_lon,depths_to_plot,run_folder,figure_counter,python_base_path,...
+    run_vec,simul_time)
 % This function is used to select the data points to plot by giving an
 % interval of points, as a substitute to the depth_classifier function.
 
 if sd_input == 0
     components_to_plot = 'stresses';
+    components_to_plot_title = 'stress';
 else
     components_to_plot = 'deflections';
+    components_to_plot_title = 'deflection';
 end
 
 viscosity_input = 0;
@@ -41,7 +44,7 @@ end
 if sd_input == 0
 %     selected_component = input(['Enter the desired stress component(s) to plot,' ...
 %         ' possible values are Mises, S11, S22, S33, S12, S13, S23:\n']);
-    selected_component = 'Mises S11 S12';
+    selected_component = 'Mises';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
         selected_components, run_folder, viscosity_input,b_input,python_base_path,run_vec,coordinate_system);
@@ -66,7 +69,7 @@ if sd_input == 0
 else
 %     selected_component = input(['Enter the desired deflection components(s) to plot,' ...
 %         ' possible values are Magnitude, U1, U2, U3:\n']);
-    selected_component = 'Magnitude U3';
+    selected_component = 'Magnitude';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
         selected_components, run_folder, viscosity_input,b_input,python_base_path,run_vec,coordinate_system);
@@ -112,7 +115,7 @@ for i=1:length(parts_to_plot)
         filtered_lon = lon(data_points_indices);
         depth_out = depth(data_points_indices);
         filtered_R = s.Radius - 1e3*depth_out;
-        matrix_for_difference(:,end-3) = plot_variable;
+        matrix_for_difference(:,j) = plot_variable;
         matrix_for_difference(:,end-2) = filtered_lat;
         matrix_for_difference(:,end-1) = filtered_lon;
         matrix_for_difference(:,end) = depth_out;
@@ -120,13 +123,13 @@ for i=1:length(parts_to_plot)
         [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
         [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
         
-        visual_check = figure();
-        scatter3(x_in,y_in,z_in,10)
-        xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
-        title(['Distribution of points for the [' num2str(min_depth) '-' num2str(max_depth) '] km range']);
-        grid on;
-        saveas(gcf,[figures_path '\visual_mesh_check_depth_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
-        close(visual_check);
+%         visual_check = figure();
+%         scatter3(x_in,y_in,z_in,10)
+%         xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
+%         title(['Distribution of points for the [' num2str(min_depth) '-' num2str(max_depth) '] km range']);
+%         grid on;
+%         saveas(gcf,[figures_path '\visual_mesh_check_depth_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
+%         close(visual_check);
         
         plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
         figure(figure_counter)
@@ -143,20 +146,33 @@ for i=1:length(parts_to_plot)
         plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
         
         caxis([colorbarlimits(j) colorbarlimits(j+length(colorbarlimits)/2)]);
+        disp([colorbarlimits(j) colorbarlimits(j+length(colorbarlimits)/2)])
+        % caxis('auto');
         h = colorbar('v');
         if sd_input == 0
             set(get(h,'ylabel'),'string',[selected_components{j} ' (Pa)'])
         else
             set(get(h,'ylabel'),'string',[selected_components{j} ' (m)'])
         end
+        if mod(run,2)==0
+            rheology = ', wet rheology';
+        else
+            rheology = ', dry rheology';
+        end
         if sd_input == 0
-            title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j} ...
-                ', iteration ' num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+            % ', stress iteration ' num2str(cycle)
+%             title({['Map of ' components_to_plot_title ' component ' selected_components{j} ','],...
+%                 ['timestep ' num2str(str2double(step) + 1) ', stress iteration ' num2str(cycle)],[' ']});
+            title({['Time ' simul_time ', stress iteration ' num2str(cycle) rheology],[' ']});
+            % title({['Time ' simul_time],[' ']});
         else 
-            title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
-                [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j} ...
-                ', iteration ' num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+%             title({['Map of the ' components_to_plot ' for part ' parts_to_plot{i} ' with depth range '],...
+%                 [num2str(min_depth) '-' num2str(max_depth) 'km and component ' selected_components{j} ...
+%                 ', iteration ' num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+%             title({['Map of ' components_to_plot_title ' component ' selected_components{j} ','],...
+%                 ['timestep ' num2str(str2double(step) + 1)  ', stress iteration ' num2str(cycle)],[' ']});
+            title({['Time ' simul_time ', stress iteration ' num2str(cycle) rheology],[' ']});
+            % title({['Time ' simul_time],[' ']});
         end
         set(findall(gca, 'type', 'text'), 'visible', 'on')
         grid on;

@@ -1,7 +1,7 @@
-function [figure_counter,visco_diff_path] = visco_plotter(sd_input,python_variables_base_path,coordinate_system, ...
-    complete_matrices_path,report_path,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
-    iteration,step,cycle,diff_matrix_path,run_folder,run,figure_counter,...
-    python_base_path,run_vec)
+function [figure_counter,visco_diff_path] = visco_plotter(sd_input,python_variables_base_path,...
+    coordinate_system,complete_matrices_path,report_path,min_lat,max_lat,min_lon,max_lon,...
+    depths_to_plot,iteration,step,cycle,diff_matrix_path,run_folder,run,figure_counter,...
+    python_base_path,run_vec,simul_time)
 close all; clc;
 % disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
 parts_to_plot = {'EARTH'};
@@ -110,14 +110,17 @@ for i=1:length(parts_to_plot)
     matrix_for_difference(:,end-2) = filtered_lat;
     matrix_for_difference(:,end-1) = filtered_lon;
     matrix_for_difference(:,end) = depth_out;
-    
+    disp(max(mises(data_points_indices,:)))
+    disp(max(strain_rate(data_points_indices,:)))
+    disp(max(viscosity(data_points_indices,:)))
+    disp(max(plot_variable))
 %     filtered_R = R*ones(length(filtered_lon),1);
 %     R_lin = R*ones(length(plot_lon),1);
     [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
     [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
     
-    figure(1)
-    scatter3(x_in,y_in,z_in,10,z_in)
+%     figure(1)
+%     scatter3(x_in,y_in,z_in,10,z_in)
 %     p = knnsearch([x_in,y_in,z_in],[x_out,y_out,z_out],'k',6);
 %     arclentot = zeros(size(plot_lat));
 %     plot_variable_out = zeros(size(plot_lat));
@@ -160,7 +163,7 @@ for i=1:length(parts_to_plot)
     geoshow(Z, refvec, 'DisplayType', 'texture');
     plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
     
-    % caxis('auto')
+    %caxis('auto')
     caxis(log10([colorbarlimits(1) colorbarlimits(2)]));
     h = colorbar('v'); % set(h, 'ylim', [0 1e6]);
     if visco_strain_input == 0
@@ -168,14 +171,23 @@ for i=1:length(parts_to_plot)
     else
         set(get(h,'ylabel'),'string','log_{10}Strain rate')
     end
-    if visco_strain_input == 0
-        title({['Viscosity for part ' parts_to_plot{i} ' with depth range '], ...
-            [num2str(min_depth) '-' num2str(max_depth) ' km, iteration ' ...
-            num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+    if mod(run,2)==0
+        rheology = ', wet rheology';
     else
-        title({['Strain rate for part ' parts_to_plot{i} ' with depth range '], ...
-            [num2str(min_depth) '-' num2str(max_depth) ' km, iteration ' ...
-            num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+        rheology = ', dry rheology';
+    end
+    if visco_strain_input == 0
+%         title({['Viscosity for part ' parts_to_plot{i} ' with depth range '], ...
+%             [num2str(min_depth) '-' num2str(max_depth) ' km, iteration ' ...
+%             num2str(iteration) ', step ' num2str(step) ', cycle ' num2str(cycle)],[' ']});
+        %  ', stress iteration ' num2str(cycle)
+%         title({['Viscosity map, timestep ' num2str(str2double(step) + 1) ', stress iteration ' num2str(cycle)],[' ']});
+        title({['Time ' simul_time ', stress iteration ' num2str(cycle) ],[' ']});
+        %title({['Time ' simul_time],[' ']});
+    else
+%         title({['Strain rate map, timestep ' num2str(str2double(step) + 1) ', stress iteration ' num2str(cycle)],[' ']});
+        title({['Time ' simul_time ', stress iteration ' num2str(cycle) ],[' ']});
+        %title({['Time ' simul_time],[' ']});
     end
     set(findall(gca, 'type', 'text'), 'visible', 'on')
     grid on;
@@ -195,11 +207,12 @@ for i=1:length(parts_to_plot)
         '_cycle_' cycle '_' num2str(min_depth) '_' num2str(max_depth) '_km.csv']);
     
 end
-for i=1:length(parts_to_plot)
-    B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
-        min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run,...
-        run_folder,viscosity_input,python_base_path,depth,run_vec);
-end
+% for i=1:length(parts_to_plot)
+%     B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
+%         min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run,...
+%         run_folder,viscosity_input,python_base_path,depth,run_vec,...
+%         coordinate_system,visco_diff_path);
+% end
 figure_counter = figure_counter+3;
 end
 

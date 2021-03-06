@@ -1,5 +1,5 @@
-def matlab_variables_writer(sd_input, complete_files_path, files_to_classify, iteration_path, classified_path,
-                            components_to_plot, area_params):
+def matlab_variables_writer(sd_input, complete_files_path, files_to_classify, iteration_path, components_to_plot,
+                            area_params):
 
     import csv
     import os
@@ -9,7 +9,7 @@ def matlab_variables_writer(sd_input, complete_files_path, files_to_classify, it
         quantity_to_plot = 'stresses'
     else:
         quantity_to_plot = 'deflections'
-    second_list = [quantity_to_plot, iteration_path, classified_path, components_to_plot, complete_files_path]
+    second_list = [quantity_to_plot, iteration_path, components_to_plot, complete_files_path]
     depth = area_params[-1]
     min_depth = depth[0]
     max_depth = depth[1]

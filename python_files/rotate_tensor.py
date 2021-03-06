@@ -10,7 +10,6 @@ def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, com
 
     # Allocate matrix for the geographical stresses and define headers
     geographical_components = np.zeros((len(part_matrix), 7))
-    stress_headers = ['S_Mises', 'S_S11', 'S_S22', 'S_S33', 'S_S12', 'S_S13', 'S_S23']
 
     # Open the complete file whose stress components have to be changed
     with open(complete_individual_path, "r") as file_to_read:
@@ -22,9 +21,9 @@ def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, com
 
         # R, Depth, lat and lon are the same, so read the values to concatenate them to the transformed tensor
         # components
-        geographical_coords = complete_file[:, 8:]
+        geo_coordinates = complete_file[:, 8:]
         # Define the stress tensor components with the necessary component swaps to take into account the change in
-        # reference system from ABAQUS to a normal cartesian one (ZXY) -> (XYZ)
+        # reference system from ABAQUS to a normal cartesian one (YZX) -> (XYZ)
         for line in range(len(complete_file)):
             # Allocate the stress tensor
             S = np.zeros((3, 3))
@@ -46,17 +45,7 @@ def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, com
             sin_theta = centroid_coords[1] / r_azimuth
             cos_phi = r_azimuth / r_3d
             sin_phi = centroid_coords[2] / r_3d
-        
-            # T = np.zeros((3, 3))
-            # T[0, 0] = cos_lon * cos_lat
-            # T[1, 0] = cos_lon * sin_lat
-            # T[2, 0] = -sin_lon
-            # T[0, 1] = sin_lon * cos_lat
-            # T[1, 1] = sin_lon * sin_lat
-            # T[2, 1] = cos_lon
-            # T[0, 2] = sin_lat
-            # T[1, 2] = -cos_lat
-            # T[2, 2] = 0.0
+            
             transformation_tensor = np.zeros((3, 3))
             unit_x = np.array([-sin_theta, -cos_theta * sin_phi, cos_theta * cos_phi])
             unit_y = np.array([cos_theta, -sin_theta * sin_phi, sin_theta * cos_phi])
@@ -92,35 +81,21 @@ def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, com
     labels_part_matrix = labels_part_matrix[np.newaxis]
     labels_complete_file = np.transpose(labels_complete_file)
     labels_part_matrix = np.transpose(labels_part_matrix)
-    complete_file_geographical = np.column_stack((labels_complete_file, geographical_components, geographical_coords))
-    geographical_coords = np.column_stack((labels_part_matrix, geographical_coords[:]))
+    complete_file_geographical = np.column_stack((labels_complete_file, geographical_components, geo_coordinates))
+    geo_coordinates = np.column_stack((labels_part_matrix, geo_coordinates[:]))
 
     # Save the complete files based on whether we need headers or not
     if headers_on == 1:
-        # with open(os.path.join(geographical_centroids_files_path, 'Geographical_coordinates_' + part_file),
-        #           'wb') as f_write:
-        #     writer = csv.writer(f_write)
-        #     writer.writerow(centroid_headers)
-        #     writer.writerows(geographical_coords)
-        # with open(os.path.join(geographical_components_files_path, 'Geographical_components_' + part_file),
-        #           'wb') as f_write:
-        #     writer = csv.writer(f_write)
-        #     writer.writerow(complete_headers)
-        #     writer.writerows(geographical_components)
         with open(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + part_file), 'wb') as \
                 f_write:
             writer = csv.writer(f_write)
             writer.writerow(complete_headers)
             writer.writerows(complete_file_geographical)
     else:
-        # with open(os.path.join(geographical_centroids_files_path, 'Geographical_coordinates_' + part_file),
-        #           'wb') as f_write:
-        #     writer = csv.writer(f_write)
-        #     writer.writerows(geographical_coords)
         with open(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + part_file), 'wb') as \
                 f_write:
             writer = csv.writer(f_write)
             writer.writerows(complete_file_geographical)
 
-    return complete_file_geographical, geographical_coords
+    return complete_file_geographical, geo_coordinates
 
