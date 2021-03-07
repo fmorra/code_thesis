@@ -6,12 +6,14 @@
     extremes_matrix = zeros(length(runs),2*length(selected_components));
     new_colorbarlimits = zeros(1,size(extremes_matrix,2));
     for run=1:length(runs)
+        run
         run_folder = [python_base_path '\run_' num2str(runs(run))];
         if strcmp(coordinate_system,'cartesian') == 1
             list = dir([run_folder '\**\Complete_file_EARTH.csv']);
         else
             list = dir([run_folder '\**\Geographical_complete_file_EARTH.csv']);
         end
+        list
         names = extractfield(list,'name');
         names_paths = extractfield(list,'folder');
         full_stress_files = cell(length(names), 1);

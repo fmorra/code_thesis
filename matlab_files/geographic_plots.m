@@ -168,12 +168,19 @@ figure_counter = 1;
 
 
 % %% Singe run case
-run = '25';
-run_vec = [21,22,25,26];
+run = '21';
+runs_directory = dir(python_base_path);
+run_folders_flags = [runs_directory.isdir];
+run_folders = runs_directory(run_folders_flags).name;
+run_fodlers_names = {};
+for i = 1:length(run_folders)
+    run_fodlers_names{i} = 
+end
+%run_vec = ;
 iteration = '1';
 step = '0';
 simul_time = '1 ka'; % '31 ka'
-cycle = '2';
+cycle = '1';
 coordinate_system = 'geographical'; % cartesian or geographical
 quantity = 'deflections'; %stresses or deflections
 min_lat = -90;
@@ -206,7 +213,6 @@ opened_file = fopen(file_to_open_path);
 
 i = 1;
 files_to_classify = {};
-plotting_params = zeros(1,6);
 while ~feof(opened_file)
     % Read a line without including the newline
     s=fgetl(opened_file);
@@ -226,7 +232,6 @@ while ~feof(opened_file)
     if isempty(extractAfter(s, '_reports')) && contains(s, 'Iteration_')
         report_path  = s;
     end
-    % if contains(s, 'Complete') == 1 || contains(s, 'geographical_complete')
     if contains(s, 'omplete') == 1 
         complete_matrices_path = s;
     end

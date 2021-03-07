@@ -20,9 +20,9 @@ def matlab_variables_writer(sd_input, complete_files_path, files_to_classify, it
     # with open(os.path.join(iteration_path, 'matlab_variable_names' + '.csv'), 'wb') as f_write:
     #     writer = csv.writer(f_write)
     #     writer.writerow(variable_list)
-    print iteration_path
+    print(iteration_path)
     with open(os.path.join(iteration_path, 'matlab_' + components_to_plot + '_' + quantity_to_plot + '_' +
                                            'variables.txt'), 'wb') as f_write:
         f_write.write('\n'.join(variable_list))
 
-    print 'File with variable names necessary for MATLAB plotting has been written.'
+    print('File with variable names necessary for MATLAB plotting has been written.')

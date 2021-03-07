@@ -2,15 +2,15 @@
 # details are in the markdown file.
 
 import os
-import platform
 import time
+import platform
 import pdb
-from stress_report_reader import *
-from deflection_report_reader import *
-from coordinate_reader import *
-from depth_classifier import *
-from matlab_variables_writer import *
-from element_tracker import *
+from .stress_report_reader import *
+from .deflection_report_reader import *
+from .coordinate_reader import *
+from .depth_classifier import *
+from .matlab_variables_writer import *
+from .element_tracker import *
 
 program_start_time = time.time()
 run = '21'
@@ -31,7 +31,7 @@ e_dat_name = 'e.dat'
 # windows or linux.
 opersys = platform.system()
 if opersys == 'Windows':
-    base_path = os.path.join('C:\Users\\fabri\\Desktop\\TU Delft\\Thesis\\ABAQUS\\test_run_python\\run_' + str(run))
+    base_path = os.path.join('C:\\Users\\fabri\\Desktop\\TU Delft\\Thesis\\ABAQUS\\test_run_python\\run_' + str(run))
 else:
     base_path = os.path.join('/home/fabri/Earth_model_abaqus_SLE0/results_run_' + str(run))
 
@@ -69,7 +69,7 @@ if not os.path.exists(deflection_processing_path):
 headers_on = 1
 check_1 = 1
 while check_1 == 1:
-    sd_input = input('Enter 0 to work with stress components, 1 for the deflections: \n')
+    sd_input = eval(input('Enter 0 to work with stress components, 1 for the deflections: \n'))
     if sd_input == 0 or sd_input == 1:
         check_1 = 0
     else:
@@ -85,16 +85,16 @@ individual_path, complete_files_path, geographical_complete_files_path, large_no
                       deflection_processing_path, headers_on, dat_name, common_files_path, coupled_stress_folder)
 end_time_coordinate_reader = time.time() - start_time_coordinate_reader
 if sd_input == 0:
-    print 'The time spent to create the complete files containing the stress components and centroid coordinates ' \
-          'is ', str(int(round(end_time_coordinate_reader))), ' seconds'
+    print(('The time spent to create the complete files containing the stress components and centroid coordinates ' \
+          'is ', str(int(round(end_time_coordinate_reader))), ' seconds'))
 else:
-    print 'The time spent to create the complete files containing the deflection components and node coordinates ' \
-          'is ', str(int(round(end_time_coordinate_reader))), ' seconds'
+    print(('The time spent to create the complete files containing the deflection components and node coordinates ' \
+          'is ', str(int(round(end_time_coordinate_reader))), ' seconds'))
 
 check_2 = 1
 while check_2 == 1:
-    components_to_plot = input('Enter 0 to work with cartesian components, 1 to work with '
-                               'geographical ones: \n')
+    components_to_plot = eval(input('Enter 0 to work with cartesian components, 1 to work with '
+                               'geographical ones: \n'))
     if components_to_plot == 0 or components_to_plot == 1:
         if components_to_plot == 0:
             components_to_plot = 'cartesian'
@@ -127,7 +127,7 @@ if not os.path.exists(os.path.join(histogram_path, 'Complete_Earth_distribution.
                      file_extension, cartesian_classified_depth_path, geographical_classified_depth_path,
                      files_to_classify_path, files_to_classify, histogram_path)
     depth_end_time = time.time() - depth_start_time
-    print 'The time spent to run depth discretization algorithm is: ', str(int(round(depth_end_time))), ' seconds'
+    print('The time spent to run depth discretization algorithm is: ', str(int(round(depth_end_time))), ' seconds')
 
 # Moved from MATLAB: depths for plotting and latlon range, because the element with the highest stress has to be
 # followed in this range only
@@ -146,6 +146,6 @@ program_end_time = time.time() - program_start_time
 
 # Count the time spent by the entire program to run
 
-print 'The time spent to run the entire program is: ', str(int(round(program_end_time))), ' seconds'
-print 'Data processing files generated. Going to the next iteration.'
+print ('The time spent to run the entire program is: ', str(int(round(program_end_time))), ' seconds')
+print ('Data processing files generated. Going to the next iteration.')
 
