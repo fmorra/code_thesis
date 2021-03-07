@@ -5,12 +5,12 @@ import os
 import time
 import platform
 import pdb
-from .stress_report_reader import *
-from .deflection_report_reader import *
-from .coordinate_reader import *
-from .depth_classifier import *
-from .matlab_variables_writer import *
-from .element_tracker import *
+from stress_report_reader import *
+from deflection_report_reader import *
+from coordinate_reader import *
+from depth_classifier import *
+from matlab_variables_writer import *
+from element_tracker import *
 
 program_start_time = time.time()
 run = '21'
@@ -29,6 +29,7 @@ else:
 e_dat_name = 'e.dat'
 # Detect the OS which is being used and select base, rpt and dat paths accordingly. Only if/else because we either use
 # windows or linux.
+
 opersys = platform.system()
 if opersys == 'Windows':
     base_path = os.path.join('C:\\Users\\fabri\\Desktop\\TU Delft\\Thesis\\ABAQUS\\test_run_python\\run_' + str(run))

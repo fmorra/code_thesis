@@ -1,6 +1,6 @@
-from .region_counter import *
-from .rotate_tensor import *
-from .cart2geo import *
+from region_counter import *
+from rotate_tensor import *
+from cart2geo import *
 
 
 def associate_stress_coord(individual_element_paths, stress_part_values, large_node_matrix_path, headers_on,

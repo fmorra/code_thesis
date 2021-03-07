@@ -1,8 +1,8 @@
-from .dat_processor import *
-from .nodes_processor import *
-from .elems_processor import *
-from .associate_stress_coord import *
-from .associate_deflection_coord import *
+from dat_processor import *
+from nodes_processor import *
+from elems_processor import *
+from associate_stress_coord import *
+from associate_deflection_coord import *
 import pdb
 import time
 

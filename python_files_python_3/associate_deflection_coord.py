@@ -1,8 +1,8 @@
 import os
 import csv
-from .rotate_deflections import *
+from rotate_deflections import *
 import numpy as np
-from .cart2geo import *
+from cart2geo import *
 import pdb
 
 

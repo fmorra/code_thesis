@@ -1,12 +1,12 @@
 from natsort import natsorted
-from .cart2geo import *
-from .python_discretizer import *
+from python_discretizer import *
 import os
 import numpy as np
 import re
 import matplotlib.pyplot as plt
 import csv
 import pdb
+import cartopy.crs as ccrs
 
 
 def depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot, headers_on,
