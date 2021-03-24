@@ -48,8 +48,8 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     #                                                               '.csv')):
 
     if os.path.isfile(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt')):
-        print('The files containing centroid stresses associated to the relative coordinates already exist, ' \
-              'moving on to classification of stress values based on depth.')
+        print('The files containing centroid stresses associated to the relative coordinates already exist, moving on '
+              'to classification of stress values based on depth.')
     else:
         print('Associating stress components to corresponding centroids...')
         with open(large_node_matrix_path) as file_to_read:

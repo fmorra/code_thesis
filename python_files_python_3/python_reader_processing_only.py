@@ -11,6 +11,7 @@ from coordinate_reader import *
 from depth_classifier import *
 from matlab_variables_writer import *
 from element_tracker import *
+from main_plot import *
 
 program_start_time = time.time()
 run = '21'
@@ -32,7 +33,7 @@ e_dat_name = 'e.dat'
 
 opersys = platform.system()
 if opersys == 'Windows':
-    base_path = os.path.join('C:\\Users\\fabri\\Desktop\\TU Delft\\Thesis\\ABAQUS\\test_run_python\\run_' + str(run))
+    base_path = os.path.join('C:\\Users\\fabri\\Desktop\\tu_delft\\Thesis\\ABAQUS\\test_run_python\\run_' + str(run))
 else:
     base_path = os.path.join('/home/fabri/Earth_model_abaqus_SLE0/results_run_' + str(run))
 
@@ -94,8 +95,7 @@ else:
 
 check_2 = 1
 while check_2 == 1:
-    components_to_plot = eval(input('Enter 0 to work with cartesian components, 1 to work with '
-                               'geographical ones: \n'))
+    components_to_plot = eval(input('Enter 0 to work with cartesian components, 1 to work with geographical ones: \n'))
     if components_to_plot == 0 or components_to_plot == 1:
         if components_to_plot == 0:
             components_to_plot = 'cartesian'
@@ -145,8 +145,9 @@ area_params = [min_lat, max_lat, min_lon, max_lon, depths_to_plot]
 matlab_variables_writer(sd_input, complete_files_path, files_to_classify, iteration_path, components_to_plot)
 program_end_time = time.time() - program_start_time
 
-# Count the time spent by the entire program to run
-
-print ('The time spent to run the entire program is: ', str(int(round(program_end_time))), ' seconds')
-print ('Data processing files generated. Going to the next iteration.')
+plotting_input = eval(input('Enter 1 to plot values over the AOI, 0 to terminate the program: \n'))
+if plotting_input == 1:
+    main_plot(files_to_classify, iteration_path)
+else:
+    print('It has been decided to not generate plots, exiting the program.')
 

@@ -19,7 +19,7 @@ set(groot,'DefaultFigureVisible','off')
 %% Stress and deflection
 % 'Mises S11 S12'
 % 'Magnitude U1 U2 U3'
-python_base_path = 'C:\Users\fabri\Desktop\TU Delft\Thesis\ABAQUS\test_run_python';
+python_base_path = 'C:\Users\fabri\Desktop\tu_delft\Thesis\ABAQUS\test_run_python';
 figure_counter = 1;
 
 % run_vec = [25];
@@ -171,23 +171,29 @@ figure_counter = 1;
 run = '21';
 runs_directory = dir(python_base_path);
 run_folders_flags = [runs_directory.isdir];
-run_folders = runs_directory(run_folders_flags).name;
-run_fodlers_names = {};
+run_folders = runs_directory(run_folders_flags);
+run_vec = [];
+run_counter = 0;
 for i = 1:length(run_folders)
-    run_fodlers_names{i} = 
+    run_folder_name = run_folders(i).name;
+    if isempty(regexp(run_folder_name, '\d+', 'match')) == 0
+        run_counter = run_counter + 1;
+        run_vec(run_counter) = str2double(regexp(run_folder_name, '\d+', 'match'));
+    end
 end
+
 %run_vec = ;
 iteration = '1';
 step = '0';
 simul_time = '1 ka'; % '31 ka'
 cycle = '1';
 coordinate_system = 'geographical'; % cartesian or geographical
-quantity = 'deflections'; %stresses or deflections
+quantity = 'stresses'; %stresses or deflections
 min_lat = -90;
 max_lat = -65;
 min_lon = -180;
 max_lon = 180;
-depths_to_plot = [96 123];
+depths_to_plot = [145 160];
 % python_variables_path = [python_variables_base_path '\run_' run '\iteration_' iteration];
 python_variables_path = [python_base_path '\run_' run '\Iteration_' iteration...
     '\step_' step '\cycle_' cycle '_reports'];
@@ -242,10 +248,8 @@ if depths_to_plot(1) > depths_to_plot (2)
     depths_to_plot([1 2]) = depths_to_plot([2 1]);
 end
 if sd_input == 0
-    matrix_to_read_part = 'Stresses_layer_';
     figure_folder = 'stress_plots';
 else
-    matrix_to_read_part = 'Deflections_layer_';
     figure_folder = 'deflection_plots';
 end
 figures_path = [report_path '\' figure_folder];

@@ -169,19 +169,19 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                 if i == 0:
                     plt.title('Distribution of ' + str(histogram_name_part) +
                               ' from the ABAQUS model at different depths for a depth range of 0 to ' +
-                              list(filter(str.isdigit, layer_values_names[i])) + ' km')
+                              str(filter(str.isdigit, layer_values_names[i])) + ' km')
                     plt.savefig(os.path.join(histogram_path, 'Depth_range_0_' +
-                                             list(filter(str.isdigit, layer_values_names[i]))
+                                             str(filter(str.isdigit, layer_values_names[i]))
                                              + '_km_distribution.png'), bbox_inches='tight')
                     fig_counter += 1
                 else:
                     plt.title('Distribution of ' + str(histogram_name_part) +
-                              ' from the ABAQUS model at different depths for a depth range of ' +
-                              list(filter(str.isdigit, layer_values_names[i - 1])) + ' to ' +
-                              list(filter(str.isdigit, layer_values_names[i])) + ' km')
+                              ' from the ABAQUS model at different de pths for a depth range of ' +
+                              str(filter(str.isdigit, layer_values_names[i - 1])) + ' to ' +
+                              str(filter(str.isdigit, layer_values_names[i])) + ' km')
                     plt.savefig(os.path.join(histogram_path, 'Depth_range_' +
-                                             list(filter(str.isdigit, layer_values_names[i - 1])) + '-' +
-                                             list(filter(str.isdigit, layer_values_names[i])) +
+                                             str(filter(str.isdigit, layer_values_names[i - 1])) + '-' +
+                                             str(filter(str.isdigit, layer_values_names[i])) +
                                              '_km_distribution.png'), bbox_inches='tight')
                     fig_counter += 1
                 indices, bin_edges = python_discretizer(depth_data, i, layer_depth, n_bins)

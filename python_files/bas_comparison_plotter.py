@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-from matplotlib import *
+from matplotlib import cm
 from matplotlib.ticker import *
 from matplotlib.pyplot import *
 from mpl_toolkits.mplot3d import Axes3D

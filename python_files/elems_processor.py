@@ -5,8 +5,8 @@ import csv
 import pdb
 
 
-def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path, stress_part_values, dat_path,
-                    file_identifiers, headers_on):
+def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,
+                    dat_path, file_identifiers, headers_on):
 
     # Define the lines which denote the parts of the file where we have to search for the element nodes; however,
     # towards the end of the part of the file we are interested in there is a series of lines containing the keyword
@@ -26,7 +26,7 @@ def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path, 
     new_nset_lines = new_nset_lines.astype(int)
     # Define all relevant paths and create the relevant folders if necessary
     large_elem_matrix_path = os.path.join(stress_processing_path, 'Large_Element_Matrix' + '.csv')
-    individual_element_paths = os.path.join(stress_part_values, 'Elements')
+    individual_element_paths = os.path.join(stress_processing_path, 'Elements')
     if not os.path.exists(individual_element_paths):
         os.makedirs(individual_element_paths)
     # Define the headers and decide whether to run the code or not based on the presence of the last file to be created

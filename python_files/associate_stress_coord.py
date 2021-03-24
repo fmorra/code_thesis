@@ -4,7 +4,7 @@ from cart2geo import *
 
 
 def associate_stress_coord(individual_element_paths, stress_part_values, large_node_matrix_path, headers_on,
-                           stress_matrices_path, coord_file, coupled_stress_folder):
+                           stress_matrices_path, coupled_stress_folder):
 
     import os
     import numpy as np

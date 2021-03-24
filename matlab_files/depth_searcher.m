@@ -7,10 +7,8 @@ function [figure_counter] = depth_searcher(run,sd_input,coordinate_system,comple
 
 if sd_input == 0
     components_to_plot = 'stresses';
-    components_to_plot_title = 'stress';
 else
     components_to_plot = 'deflections';
-    components_to_plot_title = 'deflection';
 end
 
 viscosity_input = 0;
@@ -44,7 +42,7 @@ end
 if sd_input == 0
 %     selected_component = input(['Enter the desired stress component(s) to plot,' ...
 %         ' possible values are Mises, S11, S22, S33, S12, S13, S23:\n']);
-    selected_component = 'Mises';
+    selected_component = 'Mises S11';
     selected_components = split(selected_component);
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
         selected_components, run_folder, viscosity_input,b_input,python_base_path,run_vec,coordinate_system);
@@ -123,13 +121,13 @@ for i=1:length(parts_to_plot)
         [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
         [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
         
-%         visual_check = figure();
-%         scatter3(x_in,y_in,z_in,10)
-%         xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
-%         title(['Distribution of points for the [' num2str(min_depth) '-' num2str(max_depth) '] km range']);
-%         grid on;
-%         saveas(gcf,[figures_path '\visual_mesh_check_depth_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
-%         close(visual_check);
+        visual_check = figure();
+        scatter3(x_in,y_in,z_in,10)
+        xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
+        title(['Distribution of points for the [' num2str(min_depth) '-' num2str(max_depth) '] km range']);
+        grid on;
+        saveas(gcf,[figures_path '\visual_mesh_check_depth_[' num2str(min_depth) '-' num2str(max_depth) ']_km.png']);
+        close(visual_check);
         
         plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
         figure(figure_counter)
