@@ -3,8 +3,7 @@ import pdb
 
 
 def rotate_deflections(complete_deflection_matrix):
-    # This function rotates the deflections and then saves them, the node coordinates are cartesian and are converted
-    # to latitude and longitude in th depth_classifier function.
+    # This function rotates the deflections and creates a new complete matrix to be saved.
 
     # Extract deflections and node coordinates for each part, then allocate the necessary vectors
     displacements = complete_deflection_matrix[:, 2:5]
@@ -21,6 +20,7 @@ def rotate_deflections(complete_deflection_matrix):
         cos_phi = r_azimuth / r_3d
         sin_phi = node_coordinates[i, 2] / r_3d
 
+        # Create the transformation matrix for every node by defining the unit vectors for each of them
         transformation_tensor = np.zeros((3, 3))
         unit_x = np.array([-sin_theta, -cos_theta * sin_phi, cos_theta * cos_phi])
         unit_y = np.array([cos_theta, -sin_theta * sin_phi, sin_theta * cos_phi])
@@ -38,11 +38,12 @@ def rotate_deflections(complete_deflection_matrix):
         transformation_tensor[1, 2] = np.dot(np.transpose(unit_phi), unit_z)
         transformation_tensor[2, 2] = np.dot(np.transpose(unit_r), unit_z)
 
-        # Calculate the geographical displacements and then use them to calculate the deflection magnitude
+        # Calculate the new deformation magnitude
         new_displacements = displacements[i, :][:, np.newaxis]
         geographical_displacements[i, :] = np.transpose(np.dot(transformation_tensor, new_displacements))
         u_magnitude[i] = np.sqrt(geographical_displacements[i, 0] ** 2 + geographical_displacements[i, 1] ** 2 +
                                  geographical_displacements[i, 2] ** 2)
+
     # Create and return the complete matrix for this part containing the geographical displacement components
     complete_geographical_displacements = np.column_stack((u_magnitude, geographical_displacements))
     geographical_complete_matrix = np.column_stack((complete_deflection_matrix[:, 0],

@@ -81,17 +81,19 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                 individual_coordinate_matrix[:, 2], individual_coordinate_matrix[:, 3] = \
                     individual_coordinate_matrix[:, 3], individual_coordinate_matrix[:, 2].copy()
 
-            # Create the complete deflection matrix, rotate the deflection components, append cartesian and geographical
-            # complete files to the larger matrices for all parts
+            # Create the complete deflection matrix, rotate the deflection components
             complete_deflection_matrix = np.column_stack((individual_deflection_matrix,
                                                           individual_coordinate_matrix[:, 1:]))
             geographical_complete_matrix = rotate_deflections(complete_deflection_matrix)
 
+            # Calculate R, depth, lat, lon for every node and add these values to both Cartesian and geographical
+            # deformations
             earth_radius = 6371000
             depths = np.zeros((len(complete_deflection_matrix), 1))
             radial_centroid_distance = np.zeros((len(complete_deflection_matrix), 1))
             for k in range(len(complete_deflection_matrix)):
-                radial_centroid_distance[k] = np.sqrt(complete_deflection_matrix[k, -3] ** 2 + complete_deflection_matrix[k, -2] ** 2 +
+                radial_centroid_distance[k] = np.sqrt(complete_deflection_matrix[k, -3] ** 2 +
+                                                      complete_deflection_matrix[k, -2] ** 2 +
                                                       complete_deflection_matrix[k, -1] ** 2)
                 depths[k] = earth_radius - radial_centroid_distance[k]
             complete_deflection_matrix = np.column_stack((complete_deflection_matrix, radial_centroid_distance, depths))
@@ -122,6 +124,7 @@ def associate_deflection_coord(deflection_path, individual_node_path, headers_on
                     writer = csv.writer(f_write)
                     writer.writerows(geographical_complete_matrix)
 
+        # Create txt file to attest the script has run already
         with open(os.path.join(complete_deflection_path, 'Deflection_association_completion_certificate.txt'), 'wb') \
                 as f_write:
             f_write.write('Deflection association completed.')

@@ -1,11 +1,13 @@
 def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers, dat_path, headers_on):
-
+    # Generate the files containing information for all the nodes.
     import os
     import numpy as np
     import re
     import csv
     import pdb
 
+    # Define paths for the matrix with nodes for all parts and matrices with individual part nodes, then the matrix
+    # headers
     large_node_matrix_path = os.path.join(common_files_path, 'Large_Node_Matrix.csv')
     individual_path = os.path.join(common_files_path, 'Individual_part_values')
     if not os.path.exists(individual_path):
@@ -13,6 +15,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
     headers = ['Label', 'X', 'Y', 'Z']
     large_node_matrix = []
 
+    # Only run the function if the last file to be generated does not exist yet
     if os.path.isfile(large_node_matrix_path):
         print ('The files containing the node coordinates already exist, moving on'
                ' to element nodes extraction for each part.')
@@ -32,7 +35,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
                     # Search for floats at each line
                     data = [float(s) for s in re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[ee][+-]?\d+)?", s)]
                     data = np.array([float(x) for x in data])
-                    # Delete the first element of the data vector if the vectr is longer than 4, because every 5 lines
+                    # Delete the first element of the data vector if the vector is longer than 4, because every 5 lines
                     # ABAQUS leaves a line counter which is not needed, then append the data to the individual matrix
                     if len(data) > 3:
                         if data[0] is not 0 and data[0] == data[1] and data[1] == data[2] and data[2] == data[3]:
@@ -44,7 +47,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
                 # Append each individual matrix to the matrix containing the nodes of all the parts
                 large_node_matrix.append(individual_matrix)
 
-                # Save the file for every single part differentiating between headers or not
+                # Save the file for every single part differentiating between using headers or not
                 if headers_on == 1:
                     with open(os.path.join(individual_path, 'Nodes_Part_' + file_identifiers[i] + ".csv"), 'wb') \
                             as f_write:
@@ -57,7 +60,7 @@ def nodes_processor(common_files_path, node_lines, elem_lines, file_identifiers,
                         writer = csv.writer(f_write)
                         writer.writerows(individual_matrix)
 
-        # Use dictionaries to sort all the nodes, then save the sorted node list for all parts
+        # Use dictionaries to sort all the nodes, then save the sorted node list for all parts with or without headers
         node_dictionary = {}
         for node_matrix in large_node_matrix:
             for j in range(len(node_matrix)):

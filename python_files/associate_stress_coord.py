@@ -5,7 +5,7 @@ from cart2geo import *
 
 def associate_stress_coord(individual_element_paths, stress_part_values, large_node_matrix_path, headers_on,
                            stress_matrices_path, coupled_stress_folder):
-
+    # This function calculates element centroids and associates each of them to the corresponding stress components.
     import os
     import numpy as np
     import csv
@@ -20,7 +20,8 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     csv_elem_files = [filename for filename in dir_csv_elem_files if filename.endswith(file_extension)]
     csv_stress_files = [filename for filename in dir_csv_stress_files if filename.endswith(file_extension)]
 
-    # Define the relevant folders and create them if they do not already exist
+    # Define the folders where to save centroid coordinates and the complete files with stresses and centroid
+    # coordinates
     centroid_files_path = os.path.join(stress_part_values, 'Centroids')
     if not os.path.exists(centroid_files_path):
         os.mkdir(centroid_files_path)
@@ -36,17 +37,10 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                         'Z_centroid', 'R', 'Depth', 'Lat', 'Lon']
     centroid_headers = ['Centr_label', 'X_centroid', 'Y_centroid', 'Z_centroid']
 
-    # Initialize lists to fill
-    large_centroids = []
-    large_complete_file = []
-
-    # For all the next operations we will have to refer to the large matrix containing all the part nodes, because
+    # For all the next operations it is necessary to refer to the large matrix containing all the part nodes, because
     # for each part and for each element we will have to extract the coordinates of each node
 
-    # Decide whether to run the main algorithm or not based on the presence of the last file to be created
-    # if os.path.isfile(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + coord_file[0:5] +
-    #                                                               '.csv')):
-
+    # Only run the script if the last files to be generated are not there already
     if os.path.isfile(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt')):
         print 'The files containing centroid stresses associated to the relative coordinates already exist, ' \
               'moving on to classification of stress values based on depth.'
@@ -138,8 +132,8 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             part_matrix[:, 5], part_matrix[:, 6] = part_matrix[:, 6].copy(), part_matrix[:, 5].copy()
 
             # Create the complete file for each part and region containing the stresses and centroid coordinates,
-            # appending each region file of the Earth part to the Earth large matrix so that we can also have the
-            # values for the part and not just for its sub-regions
+            # then calculate radial distance, depth, latitude and longitude for each element and also add them to the
+            # matrix
             complete_file = np.hstack((part_matrix, centroid_coord[:, 1:]))
             earth_radius = 6371000
             depths = np.zeros((len(complete_file), 1))
@@ -174,14 +168,11 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                     writer = csv.writer(f_write)
                     writer.writerows(complete_file)
 
-            # Delete the first element of the lst containing the files to process and then delete the relative
-            # element file based on whether we are processing a region stress file or not
-            # csv_stress_files.pop(0)
-
-            # Calculate and save the geographical stress components
+            # Calculate and save the geographical stress components in a complete matrix
             rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                           complete_individual_path, part_file)
 
+        # Save the complete coupled stresses matrix
         for csv_file in range(len(csv_stress_files)):
             if csv_stress_files[csv_file] == 'EARTH.csv':
                 if not os.path.exists(os.path.join(complete_files_path, 'Geographical_complete_file_coupled_' +
@@ -209,6 +200,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                     rotate_tensor(final_coupled_matrix, geographical_complete_files_path, headers_on, complete_headers,
                                   complete_individual_path_coupled, 'coupled_' + csv_stress_files[csv_file])
 
+        # Write file attesting compeltion of the program
         with open(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt'), 'wb') as f_write:
             f_write.write('Stress association completed.')
 

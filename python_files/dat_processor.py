@@ -1,11 +1,13 @@
+# Processes the .dat file with node and element information to make it more readable for the next scripts and saves
+# important variables to extract more information from the file itself.
 def dat_processor(fname):
     # Open the dat file
     with open(fname, "r+") as read_dat:
         # Read the file as a list of lines
         opened_dat = read_dat.readlines()
         print "Processing the dat file to make it more readable"
-        # Initialize counters containing a series of lines in the dat file where we will perform the search for node
-        # coordinates and element nodes
+        # Initialize lists and counters for lines where the node and element definition starts, where the part names
+        # are defined and where the .dat file part where interesting data for this work is found ends.
         node_lines = []
         elem_lines = []
         part_lines = []
@@ -24,7 +26,7 @@ def dat_processor(fname):
         line_counter = 0
         end_line_counter = 0
         # Iterate over each line of the dat file to find whether the keywords or keyphrases are contained in it, and if
-        # so, save the number of those lines. Again, extract the names of all of the model parts as they will be used to
+        # so, save the index of those lines. Again, extract the names of all of the model parts as they will be used to
         # name the csv files containing the node coordinates and element nodes. The dat file only contains the part
         # values, without being divided into the different regions.
         for line in opened_dat:

@@ -12,7 +12,7 @@ import pdb
 def depth_classifier(sd_input, deflection_processing_path, individual_path, components_to_plot, headers_on,
                      file_extension, cartesian_classified_depth_path, geographical_classified_depth_path,
                      files_to_classify_path, files_to_classify, histogram_path):
-
+    # This function bins stress and deformation values into different files based on their depth.
     # Here the data is discretized in a certain number of bins, and stored in different matrices for each of those bins.
     # Distinguish two cases, one for the stresses and one for the deflections, and define relevant variables
     if sd_input == 0:
@@ -46,7 +46,7 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
             os.mkdir(histogram_path)
     else:
         print 'Incorrect input, select either geographical or cartesian.'
-    # Only leave EARTH_POINT and EARTH_POINT_LOW as files to bin, because those are the ones that interest us. Do not
+    # Only leave EARTHas files to bin, because that is the one that interest us. Do not
     # consider the region files as they have been all saved in a single Earth part file.
 
     for file_to_evaluate in range(len(files_to_classify)):
@@ -70,6 +70,8 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
             if not matrix_to_evaluate[1:, 1:].any():
                 files_to_classify[file_to_evaluate] = 'to_delete'
     files_to_classify = filter(lambda a: a != 'to_delete', files_to_classify)
+
+    # Create a large matrix with all the data from the parts which will be discretized
     maximum_depth = 0
     earth_data = []
     for i in range(len(files_to_classify)):
@@ -81,12 +83,14 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
             maximum_depth = np.amax(depth_matrix[:, -3])
             earth_data.append(depth_matrix)
     earth_data = np.concatenate(earth_data, axis=0)
+    # Define layers, here based on the main mantle discontinuities
     if maximum_depth > 2.886e6:
         layer_depth_km = [410, 660, 2886, maximum_depth / 1000]
     else:
         layer_depth_km = [410, 660, maximum_depth / 1000]
     layer_depth_km = np.array(layer_depth_km)
     layer_depth = layer_depth_km * 1000
+    # Select whether to run the scripts or not and if so, with what options
     check_1 = 0
     check_2 = 1
     run_input = 1
@@ -110,12 +114,13 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                         print('Incorrect input, select either 1 or 0. \n')
             else:
                 print('incorrect input, select either 1 or 0. \n')
-    fig_counter = 1
 
+    # The main algorithm is skipped if the user desires so
     if run_input == 0:
         print 'Skipping this stage to generate MATLAB handles file.'
     else:
         print 'Starting discretization of data into different depths'
+        # Open every part matrix and organize it as numerical array
         large_depth_matrix = []
         for i in range(len(files_to_classify)):
             with open(os.path.join(files_to_classify_path, files_to_classify[i])) as matrix:
@@ -128,6 +133,8 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         for depth_element in range(len(layer_depth_km)):
             layer_depth_km[depth_element] = float(layer_depth_km[depth_element])
 
+        # Select all points lower than one of the layer values and then eliminate them from the matrix to process to
+        # then search for the ones with the depth higher than the next layer value
         for i in range(len(layer_depth)):
             layer_group_indices = [j for j, v in enumerate(large_depth_matrix[:, -3]) if v < layer_depth[i]]
             layer_matrix = large_depth_matrix[layer_group_indices, :]
@@ -145,22 +152,27 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                     writer.writerows(layer_matrix)
             large_depth_matrix[layer_group_indices, :] = 0
             large_depth_matrix = large_depth_matrix[~np.all(large_depth_matrix == 0, axis=1)]
+        # Define the number of bins and read the layers used
         n_bins = 30
         layer_values = os.listdir(classified_path)
         layer_values_names = [filename for filename in layer_values if filename.endswith(file_extension)]
         layer_values_names = natsorted(layer_values_names)
         fig_counter = 1
+
+        # For every layer, bin data and create a histogram
         for i in range(len(layer_values_names)):
             subclassified_path = os.path.join(classified_path, 'depth_' +
                                               str(re.search(r'\d+', layer_values_names[i]).group(0)) + '_km')
             if not os.path.exists(subclassified_path):
                 os.mkdir(subclassified_path)
+            # Open the layer matrix to discretize as a numerical array
             with open(os.path.join(classified_path, layer_values_names[i])) as layer_matrix_to_discretize:
                 layer_data_matrix = layer_matrix_to_discretize.readlines()
                 layer_data_matrix = [line.strip() for line in layer_data_matrix[1:]]
                 layer_data_matrix = [np.array([eval(j) for j in line.split(",")[:]]) for line in layer_data_matrix]
                 layer_data_matrix = np.array(layer_data_matrix)
                 depth_data = layer_data_matrix[:, -3]/1000
+                # Define and save point distribution histogram for every layer considered
                 plt.figure(fig_counter)
                 plt.hist(depth_data, n_bins, edgecolor='k', linewidth=1)
                 plt.xlabel('Depth [km]')
@@ -184,6 +196,7 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                                              filter(str.isdigit, layer_values_names[i]) +
                                              '_km_distribution.png'), bbox_inches='tight')
                     fig_counter += 1
+                # Discretize points in depth bins and save them insepaarte files for each bin for each layer
                 indices, bin_edges = python_discretizer(depth_data, i, layer_depth, n_bins)
                 for j in range(n_bins):
                     subdivision_matrix = layer_data_matrix[indices == j+1, :]
@@ -207,7 +220,8 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                             writer.writerows(subdivision_matrix)
 
     #################################################################################################################
-
+        # This part is related to the entire Earth model and bins files and generates histograms for all of it, not just
+        # its parts based on the layers defined above
         earth_bins = 50
         data = earth_data[:, -3]
         bins = np.arange(data.min(), data.max()+(data.max()-data.min())/(2*earth_bins), (data.max() - data.min())
@@ -216,7 +230,7 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
         earth_data_path = os.path.join(classified_path, 'No_layers_subdivision')
         if not os.path.exists(earth_data_path):
             os.mkdir(earth_data_path)
-
+        # Bin values based on depths and save them
         for j in range(earth_bins):
             subdivision_matrix = earth_data[earth_indices == j+1, :]
             smaller_edge = str(int(round(bins[j] / 1000)))
@@ -235,7 +249,7 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
                                                         '_' + larger_edge + '.csv'), 'wb') as f_write:
                     writer = csv.writer(f_write)
                     writer.writerows(subdivision_matrix)
-
+        # Save the matrix with values for all discretized parts
         if headers_on == 1:
             with open(os.path.join(earth_data_path, earth_name_part + '.csv'), 'wb') as f_write:
                 writer = csv.writer(f_write)
@@ -245,7 +259,7 @@ def depth_classifier(sd_input, deflection_processing_path, individual_path, comp
             with open(os.path.join(earth_data_path, earth_name_part + '.csv'), 'wb') as f_write:
                 writer = csv.writer(f_write)
                 writer.writerows(earth_data)
-
+        # Create the point distribution histogram for the entire model
         plt.figure(fig_counter)
         plt.hist(earth_data[:, -3], earth_bins, edgecolor='k', linewidth=1)
         plt.xlabel('Depth [m]')

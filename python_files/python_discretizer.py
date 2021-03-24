@@ -1,9 +1,10 @@
 def python_discretizer(data, i, layer_depth_vector, bin_number):
+    # Create depth bins to divide data
     import numpy as np
     import pdb
 
-    # bins = np.arange(data.min(), data.max()+(data.max()-data.min())/bin_number, (data.max()-data.min())/bin_number)
-    # bins = np.arange(data.min(), data.max(), (data.max()-data.min())/bin_number)
+    # Two cases, based on whether the first layer is processed or not. Intervals are defined in order to always include
+    # all interval extremes
     if i == 0:
         min_depth = i
         max_depth = layer_depth_vector[i]

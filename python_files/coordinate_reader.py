@@ -1,3 +1,4 @@
+# Import necessary functions, this function mainly calls a series of functions to genearte complete fiels
 from dat_processor import *
 from nodes_processor import *
 from elems_processor import *
@@ -10,6 +11,7 @@ import time
 def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processing_path, deflection_path,
                       deflection_processing_path, headers_on, dat_name, common_files_path, coupled_stress_folder):
 
+    # process the dat file, timing the function. All functions here will be timed and their runtime will be displayed
     start_time_dat = time.time()
     node_lines, elem_lines, nset_lines, file_identifiers, new_earth_dat = dat_processor(dat_path)
     end_time_dat = time.time() - start_time_dat
@@ -18,6 +20,7 @@ def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processin
     else:
         print 'The time spent to reprocess the dat file to make it more readable is ', str(int(round(end_time_dat))), \
             ' seconds'
+    # create .csv files containing node information
     start_time_nodes = time.time()
     individual_node_path, large_node_matrix_path = nodes_processor(common_files_path, node_lines, elem_lines,
                                                                    file_identifiers, dat_path, headers_on)
@@ -27,6 +30,9 @@ def coordinate_reader(sd_input, dat_path, stress_matrices_path, stress_processin
     else:
         print 'The time spent to extract the node coordinates for each part is ', str(int(round(end_time_nodes))), \
             ' seconds'
+    # Different procedures for stresses and deflections, as the former require the additional step of calculating
+    # element centroids. If stresses need to be processed, these centroids are calculated first and then associated to
+    # stress components. Otherwise, just associate deformations to their nodes.
     if sd_input == 0:
         start_time_elements = time.time()
         individual_element_paths = elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,

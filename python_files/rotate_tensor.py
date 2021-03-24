@@ -1,14 +1,13 @@
 def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                   complete_individual_path, part_file):
 
-    # This function converts the stress components from catesian to spherica, leaving the coordinates as cartesian.
-    # Conversion to lat and lon is carried out in the depth_classifier function.
+    # This function converts the stress components from catesian to geographical.
     import numpy as np
     import os
     import csv
     import pdb
 
-    # Allocate matrix for the geographical stresses and define headers
+    # Allocate matrix for the geographical stresses
     geographical_components = np.zeros((len(part_matrix), 7))
 
     # Open the complete file whose stress components have to be changed
@@ -45,7 +44,8 @@ def rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, com
             sin_theta = centroid_coords[1] / r_azimuth
             cos_phi = r_azimuth / r_3d
             sin_phi = centroid_coords[2] / r_3d
-            
+
+            # Create the transformation matrix for every element by defining the unit vectors for each of them
             transformation_tensor = np.zeros((3, 3))
             unit_x = np.array([-sin_theta, -cos_theta * sin_phi, cos_theta * cos_phi])
             unit_y = np.array([cos_theta, -sin_theta * sin_phi, sin_theta * cos_phi])

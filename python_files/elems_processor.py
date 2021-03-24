@@ -7,6 +7,7 @@ import pdb
 
 def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,
                     dat_path, file_identifiers, headers_on):
+    # This function is used to associate every element to the constituent nodes.
 
     # Define the lines which denote the parts of the file where we have to search for the element nodes; however,
     # towards the end of the part of the file we are interested in there is a series of lines containing the keyword
@@ -63,6 +64,7 @@ def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,
                         if elem_vector[line - new_elem_lines[k] + 1, 1] == elem_vector[line - new_elem_lines[k] + 1, 2]:
                             elem_vector[line - new_elem_lines[k] + 1, :] = 0
 
+                # Define the matrix to save
                 elem_vector = elem_vector[~np.all(elem_vector == 0, axis=1)]
                 individual_elem_matrix = elem_vector
 
@@ -82,7 +84,7 @@ def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path,
                 large_elem_matrix_unsorted_reset.append(individual_elem_matrix)
                 large_elem_matrix_unsorted.append(elem_vector)
 
-        # Sort the matrix containing all elements
+        # Sort the matrix containing all elements using dictionaries, in a similar fashion to nodes
         element_dictionary = {}
         for elem_matrix in large_elem_matrix_unsorted:
             for j in range(len(elem_matrix)):
