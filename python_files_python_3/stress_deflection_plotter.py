@@ -4,7 +4,8 @@ import re
 import numpy as np
 import cartopy.crs as chart
 import matplotlib.pyplot as plt
-import scipy.interpolate as interp
+import matplotlib.path as mpath
+from scipy.interpolate import griddata
 import pandas as pd
 import cartopy
 from matplotlib import cm
@@ -28,8 +29,6 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
         os.makedirs(complete_diff_path)
     parts_to_plot = ['EARTH']
     resolution = 0.25
-    latlim = [min_lat, max_lat]
-    lonlim = [min_lon, max_lon]
     min_depth = depths_to_plot[0]
     max_depth = depths_to_plot[1]
     earth_radius = 6371000
@@ -37,16 +36,15 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
     lon_lin = np.arange(min_lon, max_lon+resolution, resolution)
     [gridded_lon, gridded_lat] = np.meshgrid(lon_lin, lat_lin)
     r_out = np.array([])
-    lon_plot_2 = np.array([])
-    lat_plot_2 = np.array([])
+    lon_plot = np.array([])
+    lat_plot = np.array([])
     depthrange = np.arange(min_depth, max_depth, 1)
     for dd in depthrange:
-        lon_plot_2 = np.vstack((lon_plot_2, gridded_lon.reshape(-1, 1))) if lon_plot_2.size else \
-            gridded_lon.reshape(-1, 1)
-        lat_plot_2 = np.vstack((lat_plot_2, gridded_lat.reshape(-1, 1))) if lat_plot_2.size else \
-            gridded_lat.reshape(-1, 1)
+        lon_plot = np.vstack((lon_plot, gridded_lon)) if lon_plot.size else gridded_lon
+        lat_plot = np.vstack((lat_plot, gridded_lat)) if lat_plot.size else gridded_lat
         temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
-        r_out = np.vstack([r_out, temp.reshape(-1, 1)]) if r_out.size else temp.reshape(-1, 1)
+        r_out = np.vstack([r_out, temp]) if r_out.size else temp
+
     if sd_input == 0:
         selected_component = eval(input('Enter the desired stress component(s) to plot, possible values are Mises, '
                                         'S11, S22, S33, S12, S13, S23: \n'))
@@ -96,10 +94,6 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
         else:
             matrix_to_open = open(os.path.join(complete_matrices_path, 'Geographical_complete_file_' +
                                                parts_to_plot[i] + '.csv'))
-        # data_matrix = matrix_to_open.readlines()
-        # data_matrix = [line.strip() for line in data_matrix[1:]]
-        # data_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in data_matrix]
-        # matrix_to_read = np.array(data_matrix)
         matrix_to_read = pd.read_csv(matrix_to_open, delimiter=",")
         depth = matrix_to_read.iloc[:, -3] / 1e3
         lat = matrix_to_read.iloc[:, -2]
@@ -109,7 +103,7 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
         lon_condition = (lon >= min_lon) & (lon <= max_lon)
         filtered_matrix = matrix_to_read[depth_condtion & lat_condition & lon_condition]
         matrix_for_difference = np.zeros((len(filtered_matrix), len(selected_columns) + 3))
-        matrix_for_difference_headers = [selected_components, 'Latitude', 'Longitude', 'Depth']
+        matrix_for_difference_headers = selected_components + ['Latitude', 'Longitude', 'Depth']
         depth_out = filtered_matrix.iloc[:, -3]
         filtered_lat = filtered_matrix.iloc[:, -2]
         filtered_lon = filtered_matrix.iloc[:, -1]
@@ -120,8 +114,9 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
         for j in range(len(selected_columns)):
             plot_variable = filtered_matrix.iloc[:, selected_columns[j]]
             matrix_for_difference[:, j] = plot_variable
-            [x_in, y_in, z_in] = geo2cart(filtered_lon, filtered_lat, filtered_r)
-            [x_out, y_out, z_out] = geo2cart(np.deg2rad(lon_plot_2), np.deg2rad(lat_plot_2), r_out)
+            pandas_length = len(filtered_lon)
+            [x_in, y_in, z_in] = geo2cart(filtered_lon, filtered_lat, filtered_r, pandas_length)
+            [x_out, y_out, z_out] = geo2cart(lon_plot, lat_plot, r_out, pandas_length)
             visual_check = plt.figure()
             ax = Axes3D(visual_check)
             ax.scatter(x_in, y_in, z_in, alpha=0.8)
@@ -132,29 +127,36 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
             plt.savefig(os.path.join(figures_path, 'visual_mesh_check_depth_[' + str(min_depth) + '-' + str(max_depth) +
                                      ']_km.png'), bbox_inches='tight')
             plt.close(visual_check)
-            plot_variable_out = interp.griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'nearest')
-            plot_variable_out = plot_variable_out.reshape(len(lon_plot_2), len(lat_plot_2))
+            plot_variable_out = griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'linear')
             # Open image
             stress_defo_figure = plt.figure()
             # Geographic map
-            ax = plt.axes(projection=chart.Orthographic(0, -90))
-            ax.add_feature(cartopy.feature.LAND, edgecolor='orange')
-            # ax = plt.axes(projection=chart.SouthPolarStereo())
-            # ax.set_extent([-180, 180, -90, -65], crs=chart.PlateCarree())
-            # ax.add_feature(cartopy.feature.LAND, edgecolor='orange')
+            ax = plt.axes(projection=chart.SouthPolarStereo())
+            ax.set_extent([-180, 180, -90, -65], chart.PlateCarree())
+            ax.coastlines(zorder=3)
+            # theta = np.linspace(0, 2 * np.pi, 100)
+            # center, radius = [0.5, 0.5], 0.5
+            # verts = np.vstack([np.sin(theta), np.cos(theta)]).T
+            # circle = mpath.Path(verts * radius + center)
+            # ax.set_boundary(circle, transform=ax.transAxes)
+            ax.gridlines(draw_labels=True)
             # Add surface
-            # ax.plot_surface(lon_plot_2, lat_plot_2, plot_variable_out, cmap=cm.summer, linewidth=0, antialiased=False)
-            pdb.set_trace()
-            ax.contourf(lon_plot_2, lat_plot_2, plot_variable_out, transform=chart.Orthographic())
+            # surf = plt.contourf(lon_plot, lat_plot, plot_variable_out, cmap='summer', antialiased=False, alpha=0.6,
+            #                    transform=chart.PlateCarree())
+            levels = np.linspace(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)], 10)
+            surf = ax.contourf(lon_plot, lat_plot, plot_variable_out, levels=levels, cmap='summer',  antialiased=False,
+                               alpha=0.7, extend='min', transform=chart.PlateCarree())
             # Colorbar settings
-            scale = plt.colorbar(stress_defo_figure)
-            stress_defo_figure.clim(colorbarlimits[j], colorbarlimits[j + len(colorbarlimits) / 2]) # same as caxis
+            # surf.set_clim(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)])
+            # surf.set_clim(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)])
+            scale = stress_defo_figure.colorbar(surf)
+
             if sd_input == 0:
-                scale.set_label(selected_components[j] + ' (Pa)', rotation=270)
+                scale.set_label(selected_components[j] + ' (Pa)', labelpad=10)
             else:
-                scale.set_label(selected_components[j] + ' (m)', rotation=270)
+                scale.set_label(selected_components[j] + ' (m)', labelpad=10)
             # Title settings
-            if run % 2 == 0:
+            if int(run) % 2 == 0:
                 rheology = ', wet rheology'
             else:
                 rheology = ', dry rheology'
@@ -164,15 +166,12 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
             else:
                 plt.title('Time ' + simul_time + ', stress iteration ' + str(cycle) + rheology)
                 # plt.title({['Time ' simul_time], [' ']});
-            plt.show()
-            pdb.set_trace()
             plt.savefig(os.path.join(figures_path, coordinate_system + '_' + components_to_plot + '_' + parts_to_plot[i]
                                      + '[' + str(min_depth) + '-' + str(max_depth) + ']_km_' + selected_components[j] +
                                      '_' + run + '_' + iteration + '_' + step + '_' + cycle + '.png'))
             figure_counter = figure_counter + 1
             plt.close(stress_defo_figure)
-
-        diff_matrix = pd.DataFrame(data=matrix_for_difference, columns=matrix_for_difference_headers[1:])
+        diff_matrix = pd.DataFrame(data=matrix_for_difference, columns=matrix_for_difference_headers)
         diff_matrix.to_csv(os.path.join(complete_diff_path, 'Iteration_' + iteration + '_step_' +
                                                                step + '_cycle_' + cycle + '_' + str(min_depth) + '_' +
                                                                str(max_depth) + '_km.csv'), index=False)

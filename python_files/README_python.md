@@ -156,3 +156,7 @@ The function output is a handle file to pass to MATLAB to locate all necessary f
 
 This function has been removed in the Python 3 workflow as plotting is also being ported to Python.
 The total time to run the main is then calculated and displayed and the Python process is finished. The plotting operations can start in MATLAB.
+
+## Additional scripts
+### mises_verifier
+This scripts calculates the Mises stress with the formula given in the thesis report in order to verify that it can be used as an approximation of how ABAQUS calculates the Mises stress. 

@@ -3,7 +3,8 @@ import pdb
 import numpy as np
 import cartopy.crs as chart
 import matplotlib.pyplot as plt
-import scipy.interpolate as interp
+from scipy.interpolate import griddata
+import matplotlib.path as mpath
 import pandas as pd
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
@@ -38,18 +39,18 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
     max_depth = depths_to_plot[1]
     resolution = 0.25
     earth_radius = 6371000
-    lat_lin = np.arange(max_lat, min_lat, resolution)
-    lon_lin = np.arange(min_lon, max_lon, resolution)
+    lat_lin = np.arange(max_lat, min_lat - resolution, -resolution)
+    lon_lin = np.arange(min_lon, max_lon + resolution, resolution)
     [gridded_lon, gridded_lat] = np.meshgrid(lon_lin, lat_lin)
-    r_out = []
-    lon_plot_2 = []
-    lat_plot_2 = []
+    r_out = np.array([])
+    lon_plot = np.array([])
+    lat_plot = np.array([])
     depthrange = np.arange(min_depth, max_depth, 1)
     for dd in depthrange:
-        lon_plot_2 = np.vstack((lon_plot_2, gridded_lon[:]))
-        lat_plot_2 = np.vstack((lat_plot_2, gridded_lat[:]))
-        temp = (earth_radius - dd * 1e3) * np.ones(len(gridded_lon))
-        r_out = np.vstack((r_out, temp[:]))
+        lon_plot = np.vstack((lon_plot, gridded_lon)) if lon_plot.size else gridded_lon
+        lat_plot = np.vstack((lat_plot, gridded_lat)) if lat_plot.size else gridded_lat
+        temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
+        r_out = np.vstack([r_out, temp]) if r_out.size else temp
 
     for i in range(len(parts_to_plot)):
         iter_path = python_variables_base_path
@@ -62,22 +63,16 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         colorbarlimits = plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_plot,
                                              quantity, viscosity_input, b_input, python_base_path,
                                              run_vec, coordinate_system)
-        e = open(e_path)
-        e = e.readlines()
-        e = [line.strip() for line in e[1:]]
-        e = [np.array([eval(i) for i in line.split(",")[:]]) for line in e]
-        e = np.array(e)
-        elements = e[:, 1]
-        alin = e[:, 2]
-        a = e[:, 3]
+        opened_e = open(e_path)
+        e = pd.read_csv(opened_e, delimiter=",")
+        elements = e.iloc[:, 0]
+        alin = e.iloc[:, 1]
+        a = e.iloc[:, 2]
         an = 3.5
         strain_rate = np.zeros((len(e), 1))
         opened_visco_matrix = open(matrix_to_open_path)
-        opened_visco_matrix = opened_visco_matrix.readlines()
-        opened_visco_matrix = [line.strip() for line in opened_visco_matrix[1:]]
-        opened_visco_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in opened_visco_matrix]
-        opened_visco_matrix = np.array(opened_visco_matrix)
-        mises = opened_visco_matrix[:, 2]
+        opened_visco_matrix = pd.read_csv(opened_visco_matrix, delimiter=",")
+        mises = opened_visco_matrix.iloc[:, 2]
         power = (an)
         for j in range(len(strain_rate)):
             strain_rate[j, 0] = alin[j] * mises[j] + a[j] * mises[j] ^ power
@@ -92,44 +87,62 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         depth = matrix_to_read[:, -7] / 1e3
         lat = matrix_to_read[:, -6]
         lon = matrix_to_read[:, -5]
-        depth_condtion = depth > min_depth & depth < max_depth
-        lat_condition = lat > min_lat & lat < max_lat
-        lon_condition = lon > min_lon & lon < max_lon
-        data_points_indices = matrix_to_read[depth_condtion * lat_condition * lon_condition]
-        matrix_for_difference = np.zeros((len(data_points_indices), 4))
+        depth_condtion = (depth >= min_depth) & (depth <= max_depth)
+        lat_condition = (lat >= min_lat) & (lat <= max_lat)
+        lon_condition = (lon >= min_lon) & (lon <= max_lon)
+        filtered_matrix = matrix_to_read[depth_condtion & lat_condition & lon_condition]
+        matrix_for_difference = np.zeros((len(filtered_matrix), 4))
         matrix_for_difference_headers = [quantity, 'Latitude', 'Longitude', 'Depth']
         if visco_strain_input == 0:
-            plot_variable = matrix_to_read[data_points_indices, -3]
-            plot_variable = math.log10(plot_variable)
+            plot_variable = filtered_matrix[:, -3]
+            plot_variable = np.log10(plot_variable)
         else:
-            plot_variable = matrix_to_read[data_points_indices, -2]
-
-        filtered_lat = lat[data_points_indices]
-        filtered_lon = lon[data_points_indices]
-        depth_out = depth[data_points_indices]
+            plot_variable = filtered_matrix[:, -2]
+        depth_out = filtered_matrix.iloc[:, -7]
+        filtered_lat = filtered_matrix.iloc[:, -6]
+        filtered_lon = filtered_matrix.iloc[:, -5]
         filtered_r = earth_radius - 1e3 * depth_out
         matrix_for_difference[:, -4] = plot_variable
         matrix_for_difference[:, -3] = filtered_lat
         matrix_for_difference[:, -2] = filtered_lon
         matrix_for_difference[:, -1] = depth_out
-        [x_in, y_in, z_in] = geo2cart(filtered_lat, filtered_lon, filtered_r)
-        [x_out, y_out, z_out] = geo2cart(np.deg2rad(lon_plot_2), np.deg2rad(lat_plot_2), r_out)
-        plot_variable_out = interp.griddata(x_in, y_in, z_in, plot_variable, x_out, y_out, z_out, 'nearest')
+        pandas_length = len(filtered_lon)
+        [x_in, y_in, z_in] = geo2cart(filtered_lat, filtered_lon, filtered_r, pandas_length)
+        [x_out, y_out, z_out] = geo2cart(np.deg2rad(lon_plot), np.deg2rad(lat_plot), r_out, pandas_length)
+        plot_variable_out = griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'linear')
 
-        # Open image
-        stress_defo_figure = plt.figure()
+        visual_check = plt.figure()
+        ax = Axes3D(visual_check)
+        ax.scatter(x_in, y_in, z_in, alpha=0.8)
+        ax.set_xlabel('X [m]')
+        ax.set_ylabel('Y [m]')
+        ax.set_zlabel('Z [m]')
+        ax.set_title('Distribution of points for the [' + str(min_depth) + '-' + str(max_depth) + '] km range')
+        plt.savefig(os.path.join(viscosity_figures_path, 'visual_mesh_check_depth_[' + str(min_depth) + '-' + str(max_depth) +
+                                 ']_km.png'), bbox_inches='tight')
+        plt.close(visual_check)
+
+        viscosity_figure = plt.figure()
         # Geographic map
-        ax = plt.axes(projection=chart.Orthographic(0, -90))
-        ax.coastlines(resolution='50m', color='orange', linewidth=1)
+        ax = plt.axes(projection=chart.SouthPolarStereo())
+        ax.set_extent([-180, 180, -90, -65], chart.PlateCarree())
+        ax.coastlines(zorder=3)
+        theta = np.linspace(0, 2 * np.pi, 100)
+        center, radius = [0.5, 0.5], 0.5
+        verts = np.vstack([np.sin(theta), np.cos(theta)]).T
+        circle = mpath.Path(verts * radius + center)
+        ax.set_boundary(circle, transform=ax.transAxes)
+        ax.gridlines(draw_labels=True)
         # Add surface
-        ax.plot_surface(lon_plot_2, lat_plot_2, plot_variable_out, cmap=cm.summer, linewidth=0, antialiased=False)
+        # ax = stress_defo_figure.add_subplot(111, projection='3d')
+        surf = ax.contourf(lon_plot, lat_plot, plot_variable_out, cmap='summer', antialiased=False, alpha=0.6,
+                           transform=chart.PlateCarree())
         # Colorbar settings
-        scale = plt.colorbar(stress_defo_figure)
-        stress_defo_figure.clim(math.log10(colorbarlimits[0]), math.log10(colorbarlimits[1]))  # same as caxis
+        scale = viscosity_figure.colorbar(surf)
         if sd_input == 0:
-            scale.set_label(quantity[j] + ' (Pa)', rotation=270)
+            scale.set_label(quantity + ' (Pa)', labelpad=10)
         else:
-            scale.set_label(quantity[j] + ' (m)', rotation=270)
+            scale.set_label(quantity + ' (m)', labelpad=10)
         # Title settings
         if run % 2 == 0:
             rheology = ', wet rheology'

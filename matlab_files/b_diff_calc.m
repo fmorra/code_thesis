@@ -1,7 +1,7 @@
 function [] = b_diff_calc(b_diff_plots_folder,python_base_path,min_lat,max_lat,...
     min_lon,max_lon,min_depth,max_depth,figure_counter)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% This function calculates difference plots for the B coefficients
+% Select runs for which they are different
 runs = [25,26];
 
 all_diff_files = {};
@@ -18,6 +18,8 @@ for i=1:length(runs)
         count = count + 1;
     end
 end
+
+% Mesh data
 resolution = 0.25;
 latlim = [min_lat max_lat];
 lonlim = [min_lon max_lon];
@@ -25,8 +27,6 @@ s = referenceSphere('Earth');
 lat_lin = max_lat:-resolution:min_lat;
 lon_lin = min_lon:resolution:max_lon;
 [gridded_lon,gridded_lat] = meshgrid(lon_lin,lat_lin);
-% plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
-% plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
 r_out = []; lon_plot_2 = []; lat_plot_2 = [];
 depthrange = min_depth:1:max_depth;
 for dd = depthrange
@@ -36,6 +36,7 @@ for dd = depthrange
     r_out = [r_out; temp(:)];
 end
 
+% Find data matrix for the first run
 matrix_1_flag = 0;
 while matrix_1_flag == 0
     for i=1:length(all_diff_files)
@@ -56,13 +57,9 @@ while matrix_1_flag == 0
     end
 end
 
+% Find data matrix for the second run
 matrix_2_flag = 0;
 while matrix_2_flag == 0
-%     quintuplet_2 = input(['Enter the run, step and cycle number, and the minimum and maximum depth '...
-%     'of the second matrix  used to plot the difference with respect to another moment in time '...
-%     'as a vector of square brackets of five values:\n']);
-%     for i=1:length(diff_files)
-%         found_values_2 = str2double(regexp(diff_files{i}, '\d+', 'match'));
     for i=1:length(all_diff_files)
         triplet_2 = [runs(2) min_depth max_depth];
         b = regexp(all_diff_files{i}, '\d+', 'match');
@@ -83,6 +80,8 @@ end
 min_depth = triplet_2(2);
 max_depth = triplet_2(3);
 
+% Again, filter the data, interpolate and plot it. Save the figure
+% afterwards.
 if matrix_1_flag == 1 && matrix_2_flag == 1
     % Extract the headers of both matrices, intersect and display the
     % possible common variables

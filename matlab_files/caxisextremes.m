@@ -1,11 +1,21 @@
  function [new_colorbarlimits] = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,...
      depths_to_plot,selected_components,~,viscosity_input,b_input,python_base_path,run_vec,...
      coordinate_system)
-
+    % This function calculates the colorbar extremes by reading all the
+    % simulation run folder in the directory where they are saved in order
+    % to give the same range to all plots.
+    
+    % read all the runs and allocate a matrix for all the extremes, meaning
+    % for every component of every run, then a vector for the extremes of
+    % every component after calculating min and max on every column in the
+    % previous matrix
     runs = run_vec;
     extremes_matrix = zeros(length(runs),2*length(selected_components));
     new_colorbarlimits = zeros(1,size(extremes_matrix,2));
+    % Iterate over every simulation
     for run=1:length(runs)
+        % Extract all the possible files for every iteration and step in
+        % every run folder, for stresses or deflections
         run_folder = [python_base_path '\run_' num2str(runs(run))];
         if strcmp(coordinate_system,'cartesian') == 1
             list = dir([run_folder '\**\Complete_file_EARTH.csv']);
@@ -27,7 +37,9 @@
         full_stress_files = full_stress_files(~cellfun('isempty',full_stress_files));
         full_defo_files = full_defo_files(~cellfun('isempty',full_defo_files));
         
+        % Stress case
         if sd_input == 0 && viscosity_input == 0
+            % Read the right data based on selected columns
             stress_extremes_matrix = zeros(length(full_stress_files),length(selected_components)*2);
             for j = 1:length(full_stress_files)
                 stress_matrix = readmatrix(full_stress_files{j});
@@ -51,6 +63,8 @@
                         
                     end
                 end
+                % Only read the points of the selected variable which are
+                % in the desired ranges
                 depth = stress_matrix(:,end-2)/1e3;
                 lat = stress_matrix(:,end-1);
                 lon = stress_matrix(:,end);
@@ -62,17 +76,22 @@
                 data_points_indices = stress_matrix(depth_condtion...
                     & lat_condition & lon_condition);
                 condition_matrix = stress_matrix(data_points_indices,:);
+                % Calculate min and max of the current data columna nd
+                % store them in conscutive cells in the current stress
+                % iteration row
                 for l = 1:length(selected_columns)
                     variable = condition_matrix(:,selected_columns(l));
                     variable_extremes = [min(variable),max(variable)];
                     stress_extremes_matrix(j,2*l-1:2*l) = variable_extremes;
                 end
             end
+            % Calculate the colorbar limits with min and max over every 2
+            % matrix cells in order to do this for every component
             colorbarlimits = [min(stress_extremes_matrix(:,1:2:size(stress_extremes_matrix,2)-1))...
                 max(stress_extremes_matrix(:,2:2:size(stress_extremes_matrix,2)))];
-            disp(colorbarlimits)
-            %     colorbarlimits = stress_extremes_matrix;
+        % Deformations
         elseif sd_input == 1 && viscosity_input == 0
+            % The procedure is exactly the same as for the stresses.
             defo_extremes_matrix = zeros(length(full_defo_files),length(selected_components)*2);
             for k = 1:length(full_defo_files)
                 defo_matrix = readmatrix(full_defo_files{k});
@@ -101,6 +120,7 @@
                 data_points_indices = defo_matrix(depth_condtion...
                     & lat_condition & lon_condition);
                 condition_matrix = defo_matrix(data_points_indices,:);
+                % 
                 for l = 1:length(selected_columns)
                     variable = condition_matrix(:,selected_columns(l));
                     variable_extremes = [min(variable),max(variable)];
@@ -108,11 +128,13 @@
                 end
                 colorbarlimits = [min(defo_extremes_matrix(:,1:2:size(defo_extremes_matrix,2)-1))...
                     max(defo_extremes_matrix(:,2:2:size(defo_extremes_matrix,2)))];
-                %         colorbarlimits = defo_extremes_matrix;
             end
+        % Viscosity
         elseif viscosity_input == 1 && b_input == 0
             visco_extremes_matrix = zeros(length(full_stress_files),2);
             for l = 1:length(full_stress_files)
+                % Read all the values necessary to calculate the viscosity
+                % from the Mises stress
                 e_path = [run_folder '\e.dat'];
                 e = readmatrix(e_path);
                 elements = e(:,1);
@@ -123,6 +145,8 @@
                 opened_visco_matrix = readmatrix(full_stress_files{l});
                 mises = opened_visco_matrix(:,2);
                 pow = (an);
+                % Calculate the viscosity and strain rate and filter them
+                % for the ranges we are interested in
                 for j = 1:length(strain_rate)
                     strain_rate(j,1) = alin(j)*mises(j) + a(j)*mises(j)^pow;
                 end
@@ -145,15 +169,21 @@
                 data_points_indices = complete_matrix_with_viscosity(depth_condtion...
                     & lat_condition & lon_condition);
                 condition_matrix = complete_matrix_with_viscosity(data_points_indices,:);
+                % Same as before, but this time the matrix with min and max
+                % only has 2 columns instead of 2*number of variables to
+                % plot
                 variable = condition_matrix(:,end-2);
                 variable_extremes = [min(variable),max(variable)];
                 visco_extremes_matrix(l,1:2) = variable_extremes;
                 colorbarlimits = [min(visco_extremes_matrix(:,1))...
                     max(visco_extremes_matrix(:,2))];
             end
+        % B coefficients
         elseif viscosity_input == 1 && b_input==1
             B_extremes_matrix = zeros(length(full_stress_files),2);
             for l = 1:length(full_stress_files)
+                % Read the B coefficients and filter them for the desired
+                % ranges
                 e_path = [run_folder '\e.dat'];
                 e = readmatrix(e_path);
                 alin = e(:,2);
@@ -172,8 +202,7 @@
                 data_points_indices = complete_matrix_B(depth_condtion...
                     & lat_condition & lon_condition);
                 selected_columns = [alin(data_points_indices,:),a(data_points_indices,:)];
-                
-                %condition_matrix = complete_matrix_B(data_points_indices,:);
+                % This time the matrix has 4 columns, for 2 variables
                 for m = 1:size(selected_columns,2)
                     variable = selected_columns(:,m);
                     variable_extremes = [min(variable),max(variable)];
@@ -187,6 +216,9 @@
         end
         extremes_matrix(run,:) = colorbarlimits;
     end
+    % Calculate min and max over every column of the matrix which has a row
+    % for each simulation run and the minima and maxima of the selected
+    % values over every stress iteration in that run for its columns
     for minmax_counter=1:(size(extremes_matrix,2)/2)
         new_colorbarlimits(1,minmax_counter) = min(extremes_matrix(:,minmax_counter));
         new_colorbarlimits(1,minmax_counter+size(extremes_matrix,2)/2) = ...

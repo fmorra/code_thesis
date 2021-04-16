@@ -16,7 +16,7 @@ def main_plot(files_to_classify, report_path):
     iteration = '1'
     step = '0'
     simul_time = '1 ka'
-    cycle = '1'
+    cycle = '2'
     python_variables_path = os.path.join(python_base_path, 'run_' + run, 'Iteration_' + iteration, 'step_' + step,
                                          'cycle_' + cycle + '_reports')
     coordinate_system_input = eval(input('Enter the coordinate system to use for plotting, 0 for cartesian, 1 for '

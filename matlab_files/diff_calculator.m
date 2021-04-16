@@ -4,6 +4,7 @@ function [figure_counter] = diff_calculator(diff_matrix_path_incomplete,min_lat,
 % [1 0 1 145 150]
 % [1 0 2 145 150]
 
+% Mesh data
 resolution = 0.25;
 latlim = [min_lat max_lat];
 lonlim = [min_lon max_lon];
@@ -13,8 +14,6 @@ s = referenceSphere('Earth');
 lat_lin = max_lat:-resolution:min_lat;
 lon_lin = min_lon:resolution:max_lon;
 [gridded_lon,gridded_lat] = meshgrid(lon_lin,lat_lin);
-% plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
-% plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
 r_out = []; lon_plot_2 = []; lat_plot_2 = [];
 depthrange = min_depth:1:max_depth;
 for dd = depthrange
@@ -24,6 +23,8 @@ for dd = depthrange
     r_out = [r_out; temp(:)];
 end
 
+% Manually change what differences to plot meaning what quantity in which
+% reference system
 visco_choice = 0;
 if visco_choice == 0
     stress_deflection_input = 1;
@@ -50,8 +51,10 @@ else
     diff_matrix_path = [diff_matrix_path_incomplete '\' quantity];
     diff_plots_folder = [diff_matrix_path_incomplete '\plots\' quantity];
 end
-dir_diff_files = dir([diff_matrix_path '\*.csv']);
 
+% Locate the data matrix for the difference plots and create the folder for
+% these plots
+dir_diff_files = dir([diff_matrix_path '\*.csv']);
 if ~exist(diff_plots_folder, 'dir')
     mkdir(diff_plots_folder)
 end
@@ -59,14 +62,12 @@ diff_files = {dir_diff_files.name};
 
 matrix_1_flag = 0;
 while matrix_1_flag == 0
-%     quintuplet_1 = input(['Enter the iteration, step and cycle number, and the minimum and maximum depth '...
-%     'of the first matrix used to plot the difference with respect to another moment in time '...
-%     'as a vector of square brackets of five values:\n']);
-%     for i=1:length(diff_files)
-%         found_values_1 = str2double(regexp(diff_files{i}, '\d+', 'match'));
+    % Insert ietration, step, stress iteration and depth range of the first
+    % time and find the corresponding matrix
+    quintuplet_1 = input(['Enter the iteration, step and cycle number, and the minimum and maximum depth '...
+    'of the first matrix used to plot the difference with respect to another moment in time '...
+    'as a vector of square brackets of five values:\n']);
     for i=1:length(diff_files)
-        quintuplet_1 = [str2double(iteration) str2double(step) 2 ...
-            depths_to_plot(1) depths_to_plot(2)];
         found_values_1 = str2double(regexp(diff_files{i}, '\d+', 'match'));
         if isequal(quintuplet_1,found_values_1)
             matrix_1_flag = 1;
@@ -87,14 +88,12 @@ end
 
 matrix_2_flag = 0;
 while matrix_2_flag == 0
-%     quintuplet_2 = input(['Enter the run, step and cycle number, and the minimum and maximum depth '...
-%     'of the second matrix  used to plot the difference with respect to another moment in time '...
-%     'as a vector of square brackets of five values:\n']);
-%     for i=1:length(diff_files)
-%         found_values_2 = str2double(regexp(diff_files{i}, '\d+', 'match'));
+    % Insert ietration, step, stress iteration and depth range of the
+    % second time and find the corresponding matrix
+    quintuplet_2 = input(['Enter the run, step and cycle number, and the minimum and maximum depth '...
+    'of the second matrix  used to plot the difference with respect to another moment in time '...
+    'as a vector of square brackets of five values:\n']);
     for i=1:length(diff_files)
-        quintuplet_2 = [str2double(iteration) str2double(step) 3 ...
-            depths_to_plot(1) depths_to_plot(2)];
         found_values_2 = str2double(regexp(diff_files{i}, '\d+', 'match'));
         if isequal(quintuplet_2,found_values_2)
             matrix_2_flag = 1;
@@ -115,6 +114,7 @@ end
 min_depth = quintuplet_2(4);
 max_depth = quintuplet_2(5);
 
+% This happens only if the matrices for both times are found
 if matrix_1_flag == 1 && matrix_2_flag == 1
     % Extract the headers of both matrices, intersect and display the
     % possible common variables
@@ -128,19 +128,23 @@ if matrix_1_flag == 1 && matrix_2_flag == 1
     disp(['The possible variables to generate the difference plots between these'...
         ' two cycles are:\n']);
     disp(possible_variables_for_plotting);
+    % Filter data for the given ranges
     diff_variables_to_plot = possible_variables_for_plotting;
     filtered_lat = values_1(:,end-2);
     filtered_lon = values_1(:,end-1);
     depth_out = values_1(:,end);
     filtered_R = s.Radius - 1e3*depth_out;
     for i=1:length(diff_variables_to_plot)
+        % read the variable at two different times and 3D interpolate the
+        % data
         diff_variable_1 = values_1(:,strcmp(headers_1,diff_variables_to_plot{i}));
         diff_variable_2 = values_2(:,strcmp(headers_2,diff_variables_to_plot{i}));
         diff = diff_variable_2-diff_variable_1;
         [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
         [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
         plot_variable_out = griddata(x_in,y_in,z_in,diff,x_out,y_out,z_out,'nearest');
-        
+        % generate and save the difference plots with different label,
+        % title and figure name options
         figure(figure_counter)
         colormap summer;
         load coastlines;

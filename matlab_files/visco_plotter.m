@@ -5,12 +5,7 @@ function [figure_counter,visco_diff_path] = visco_plotter(sd_input,python_variab
 close all; clc;
 % disp('Viscosity can only be plotted for part EARTH, as it is the one we have the B values for. \n');
 parts_to_plot = {'EARTH'};
-% visco_strain_input = input('Enter 0 to plot the viscosity, 1 to plot the strain rate:\n');
-% if visco_strain_input == 0
-%     quantity = 'viscosity';
-% else
-%     quantity = 'strain_rate';
-% end
+% Allocate path for the figures and the data matrices for difference plots
 visco_strain_input = 0;
 if visco_strain_input == 0
     quantity = 'viscosity';
@@ -27,6 +22,8 @@ viscosity_figures_path = [report_path '\viscosity_plots'];
 if ~exist(viscosity_figures_path, 'dir')
     mkdir (viscosity_figures_path)
 end
+
+% create data grid again as for the stresses and deformations
 b_input = 0;
 latlim = [min_lat max_lat];
 lonlim = [min_lon max_lon];
@@ -38,8 +35,6 @@ s = referenceSphere('Earth');
 lat_lin = max_lat:-resolution:min_lat;
 lon_lin = min_lon:resolution:max_lon;
 [gridded_lon,gridded_lat] = meshgrid(lon_lin,lat_lin);
-% plot_lon = reshape(gridded_lon, [numel(gridded_lon),1]);
-% plot_lat = reshape(gridded_lat, [numel(gridded_lat),1]);
 r_out = []; lon_plot_2 = []; lat_plot_2 = [];
 depthrange = min_depth:1:max_depth;
 for dd = depthrange
@@ -61,9 +56,12 @@ for i=1:length(parts_to_plot)
             parts_to_plot{i} '.csv'];
     end
     selected_components = cellstr(quantity);
+    % Define colorbar limits
     colorbarlimits = caxisextremes(sd_input,min_lat,max_lat,min_lon,max_lon,depths_to_plot,...
         selected_components,run_folder,viscosity_input,b_input,python_base_path,run_vec,...
         coordinate_system);
+    % Read all the values necessary for the viscosity calculation, then
+    % calculate viscosity and strain rate
     e = readmatrix(e_path);
     elements = e(:,1);
     alin = e(:,2);
@@ -83,7 +81,8 @@ for i=1:length(parts_to_plot)
     viscosity_matrix(:,end - 1) = strain_rate;
     viscosity_matrix(:,end) = mises;
     complete_matrix_with_viscosity = [opened_visco_matrix, viscosity_matrix];
-    
+    % Filter viscosity or strain rate for the ranges of interest and start
+    % allocating these values in the matrix for difference plots
     matrix_to_read = complete_matrix_with_viscosity;
     depth = matrix_to_read(:,end-6)/1e3;
     lat = matrix_to_read(:,end-5);
@@ -93,29 +92,28 @@ for i=1:length(parts_to_plot)
     lon_condition = lon>min_lon & lon<max_lon;
     data_points_indices = matrix_to_read(depth_condtion...
         & lat_condition & lon_condition);
-    
     matrix_for_difference = zeros(length(data_points_indices),4);
     matrix_for_difference_headers = {quantity,'Latitude','Longitude','Depth'};
-    if visco_strain_input == 0
-        plot_variable = matrix_to_read(data_points_indices,end-2);
-        plot_variable = log10(plot_variable);
-    else
-        plot_variable = matrix_to_read(data_points_indices,end-1);
-    end
     filtered_lat = lat(data_points_indices);
     filtered_lon = lon(data_points_indices);
     depth_out = depth(data_points_indices);
     filtered_R = s.Radius - 1e3*depth_out;
-    matrix_for_difference(:,end-3) = plot_variable;
     matrix_for_difference(:,end-2) = filtered_lat;
     matrix_for_difference(:,end-1) = filtered_lon;
     matrix_for_difference(:,end) = depth_out;
-    disp(max(mises(data_points_indices,:)))
-    disp(max(strain_rate(data_points_indices,:)))
-    disp(max(viscosity(data_points_indices,:)))
-    disp(max(plot_variable))
+    % Select either viscosity or strain rate and calculate the log for a
+    % better interpretation
+    if visco_strain_input == 0
+        plot_variable = matrix_to_read(data_points_indices,end-2);
+        
+    else
+        plot_variable = matrix_to_read(data_points_indices,end-1);
+    end
+    plot_variable = log10(plot_variable);
+    matrix_for_difference(:,end-3) = plot_variable;
 %     filtered_R = R*ones(length(filtered_lon),1);
 %     R_lin = R*ones(length(plot_lon),1);
+    % Convert to Cartesian for 3D interpolation
     [x_in,y_in,z_in]=sph2cart(deg2rad(filtered_lon),deg2rad(filtered_lat),filtered_R);
     [x_out,y_out,z_out]=sph2cart(deg2rad(lon_plot_2),deg2rad(lat_plot_2),r_out);
     
@@ -148,7 +146,8 @@ for i=1:length(parts_to_plot)
 %         plot_variable_out = plot_variable_out+viscosity(p(:,ii)).*(arclen./arclentot);
 %     end
     
-    
+    % 3D interpolate data and plot results using the colorbar extremes
+    % defined above
     plot_variable_out = griddata(x_in,y_in,z_in,plot_variable,x_out,y_out,z_out,'nearest');
     figure()
     colormap summer;
@@ -162,8 +161,6 @@ for i=1:length(parts_to_plot)
     set(findall(gca, 'type', 'text'), 'visible', 'on')
     geoshow(Z, refvec, 'DisplayType', 'texture');
     plotm(coastlat, coastlon, 'color', rgb('OrangeRed'));
-    
-    %caxis('auto')
     caxis(log10([colorbarlimits(1) colorbarlimits(2)]));
     h = colorbar('v'); % set(h, 'ylim', [0 1e6]);
     if visco_strain_input == 0
@@ -191,8 +188,7 @@ for i=1:length(parts_to_plot)
     end
     set(findall(gca, 'type', 'text'), 'visible', 'on')
     grid on;
-    % Save the figures based on whether we are working with
-    % stresses or deflections
+    % Save the pltos and then the matrix for the difference plots
     if visco_strain_input == 0
         saveas(gcf,[viscosity_figures_path '\' 'Viscosity_' parts_to_plot{i}...
             '[' num2str(min_depth) '-' num2str(max_depth) ']_km_'...
@@ -207,6 +203,7 @@ for i=1:length(parts_to_plot)
         '_cycle_' cycle '_' num2str(min_depth) '_' num2str(max_depth) '_km.csv']);
     
 end
+% generate plots for the B coefficients
 % for i=1:length(parts_to_plot)
 %     B_plots(viscosity_figures_path,alin,a,data_points_indices,parts_to_plot{i},...
 %         min_depth,max_depth,min_lat,max_lat,min_lon,max_lon,lat,lon,run,...
