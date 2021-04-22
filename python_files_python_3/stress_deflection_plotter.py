@@ -134,23 +134,19 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
             ax = plt.axes(projection=chart.SouthPolarStereo())
             ax.set_extent([-180, 180, -90, -65], chart.PlateCarree())
             ax.coastlines(zorder=3)
+            # Make the map a circle as we are looking at the South Pole
             # theta = np.linspace(0, 2 * np.pi, 100)
             # center, radius = [0.5, 0.5], 0.5
             # verts = np.vstack([np.sin(theta), np.cos(theta)]).T
             # circle = mpath.Path(verts * radius + center)
             # ax.set_boundary(circle, transform=ax.transAxes)
             ax.gridlines(draw_labels=True)
-            # Add surface
-            # surf = plt.contourf(lon_plot, lat_plot, plot_variable_out, cmap='summer', antialiased=False, alpha=0.6,
-            #                    transform=chart.PlateCarree())
+            # Add surface and colorbar
             levels = np.linspace(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)], 10)
             surf = ax.contourf(lon_plot, lat_plot, plot_variable_out, levels=levels, cmap='summer',  antialiased=False,
                                alpha=0.7, extend='min', transform=chart.PlateCarree())
-            # Colorbar settings
-            # surf.set_clim(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)])
-            # surf.set_clim(colorbarlimits[j], colorbarlimits[j + int(len(colorbarlimits) / 2)])
             scale = stress_defo_figure.colorbar(surf)
-
+            # Color bar description
             if sd_input == 0:
                 scale.set_label(selected_components[j] + ' (Pa)', labelpad=10)
             else:
@@ -162,15 +158,15 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
                 rheology = ', dry rheology'
             if sd_input == 0:
                 plt.title('Time ' + simul_time + ', stress iteration ' + str(cycle) + rheology)
-                # plt.title({['Time ' simul_time], [' ']});
             else:
                 plt.title('Time ' + simul_time + ', stress iteration ' + str(cycle) + rheology)
-                # plt.title({['Time ' simul_time], [' ']});
+            # Save figure and close the current plot
             plt.savefig(os.path.join(figures_path, coordinate_system + '_' + components_to_plot + '_' + parts_to_plot[i]
                                      + '[' + str(min_depth) + '-' + str(max_depth) + ']_km_' + selected_components[j] +
                                      '_' + run + '_' + iteration + '_' + step + '_' + cycle + '.png'))
             figure_counter = figure_counter + 1
             plt.close(stress_defo_figure)
+        # Save matrix for difference plot generation
         diff_matrix = pd.DataFrame(data=matrix_for_difference, columns=matrix_for_difference_headers)
         diff_matrix.to_csv(os.path.join(complete_diff_path, 'Iteration_' + iteration + '_step_' +
                                                                step + '_cycle_' + cycle + '_' + str(min_depth) + '_' +

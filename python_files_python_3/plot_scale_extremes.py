@@ -14,7 +14,7 @@ def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_
         file_list = []
         for root, dirs, files in os.walk(run_folder, topdown=False):
             for name in files:
-                if coordinate_system_input == 0:
+                if coordinate_system_input == 'cartesian':
                     if name == "Complete_file_EARTH.csv":
                         file_list.append(os.path.join(root, name))
                 else:
@@ -98,7 +98,7 @@ def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_
             scale_limits = np.hstack((minima[0::2], maxima[1::2]))
         elif viscosity_input == 1:
             e_path = os.path.join(run_folder, 'e.dat')
-            e = pd.read_csv(e_path, delimiter=",", skiprows=1)
+            e = pd.read_csv(e_path, delimiter=" ")
             elements = e.iloc[:, 0]
             alin = e.iloc[:, 1]
             a = e.iloc[:, 2]
@@ -109,12 +109,13 @@ def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_
             for l in range(len(full_stress_files)):
                 opened_viscosity_matrix = pd.read_csv(full_stress_files[l], delimiter=",", skiprows=1)
                 mises = opened_viscosity_matrix.iloc[:, 1]
-                depth = opened_viscosity_matrix[:, -3] / 1e3
-                lat = opened_viscosity_matrix[:, -2]
-                lon = opened_viscosity_matrix[:, -1]
-                depth_condition = depth > min_depth & depth < max_depth
-                lat_condition = lat > min_lat & lat < max_lat
-                lon_condition = lon > min_lon & lon < max_lon
+                depth = opened_viscosity_matrix.iloc[:, -3] / 1e3
+                lat = opened_viscosity_matrix.iloc[:, -2]
+                lon = opened_viscosity_matrix.iloc[:, -1]
+                depth_condition = (depth > min_depth) & (depth < max_depth)
+                lat_condition = (lat > min_lat) & (lat < max_lat)
+                lon_condition = (lon > min_lon) & (lon < max_lon)
+                condition_matrix = opened_viscosity_matrix[depth_condition & lat_condition & lon_condition]
                 if b_input == 0:
                     for j in range(len(strain_rate)):
                         strain_rate[j, 1] = alin[j] * mises[j] + a[j] * mises[j] ^ exponent

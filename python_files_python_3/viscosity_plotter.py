@@ -18,6 +18,7 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
                       min_lat, max_lat, min_lon, max_lon, depths_to_plot, iteration, step, cycle, diff_matrix_path,
                       run_folder, run, figure_counter, python_base_path, run_vec, simul_time):
 
+    # Definition of
     parts_to_plot = ['EARTH']
     visco_strain_input = 0
     if visco_strain_input == 0:
@@ -73,7 +74,7 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         opened_visco_matrix = open(matrix_to_open_path)
         opened_visco_matrix = pd.read_csv(opened_visco_matrix, delimiter=",")
         mises = opened_visco_matrix.iloc[:, 2]
-        power = (an)
+        power = an
         for j in range(len(strain_rate)):
             strain_rate[j, 0] = alin[j] * mises[j] + a[j] * mises[j] ^ power
         viscosity = mises / (3 * strain_rate)
@@ -127,17 +128,17 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         ax = plt.axes(projection=chart.SouthPolarStereo())
         ax.set_extent([-180, 180, -90, -65], chart.PlateCarree())
         ax.coastlines(zorder=3)
-        theta = np.linspace(0, 2 * np.pi, 100)
-        center, radius = [0.5, 0.5], 0.5
-        verts = np.vstack([np.sin(theta), np.cos(theta)]).T
-        circle = mpath.Path(verts * radius + center)
-        ax.set_boundary(circle, transform=ax.transAxes)
+        # Make the map a circle as we are looking at the South Pole
+        # theta = np.linspace(0, 2 * np.pi, 100)
+        # center, radius = [0.5, 0.5], 0.5
+        # verts = np.vstack([np.sin(theta), np.cos(theta)]).T
+        # circle = mpath.Path(verts * radius + center)
+        # ax.set_boundary(circle, transform=ax.transAxes)
         ax.gridlines(draw_labels=True)
-        # Add surface
-        # ax = stress_defo_figure.add_subplot(111, projection='3d')
-        surf = ax.contourf(lon_plot, lat_plot, plot_variable_out, cmap='summer', antialiased=False, alpha=0.6,
-                           transform=chart.PlateCarree())
-        # Colorbar settings
+        # Add surface and colorbar
+        levels = np.linspace(colorbarlimits[0], colorbarlimits[-1], 10)
+        surf = ax.contourf(lon_plot, lat_plot, plot_variable_out, levels=levels, cmap='summer', antialiased=False,
+                           alpha=0.7, extend='min', transform=chart.PlateCarree())
         scale = viscosity_figure.colorbar(surf)
         if sd_input == 0:
             scale.set_label(quantity + ' (Pa)', labelpad=10)

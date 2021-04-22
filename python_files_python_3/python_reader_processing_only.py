@@ -147,7 +147,7 @@ program_end_time = time.time() - program_start_time
 
 plotting_input = eval(input('Enter 1 to plot values over the AOI, 0 to terminate the program: \n'))
 if plotting_input == 1:
-    main_plot(files_to_classify, iteration_path)
+    main_plot(sd_input, components_to_plot, iteration_path)
 else:
     print('It has been decided to not generate plots, exiting the program.')
 
