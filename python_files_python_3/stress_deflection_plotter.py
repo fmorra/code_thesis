@@ -17,17 +17,16 @@ from geo2cart import *
 def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrices_path, figures_path,
                               diff_matrix_path, iteration, step, cycle, min_lat, max_lat, min_lon, max_lon,
                               depths_to_plot, figure_counter, python_base_path, run_vec, simul_time,
-                              coordinate_system_input):
+                              coordinate_system_input, parts_to_plot, b_input):
     if sd_input == 0:
         components_to_plot = 'stresses'
     else:
         components_to_plot = 'deflections'
     viscosity_input = 0
-    b_input = 0
+    visco_strain_input = 0
     complete_diff_path = os.path.join(diff_matrix_path, components_to_plot, coordinate_system)
     if not os.path.exists(complete_diff_path):
         os.makedirs(complete_diff_path)
-    parts_to_plot = ['EARTH']
     resolution = 0.25
     min_depth = depths_to_plot[0]
     max_depth = depths_to_plot[1]
@@ -44,14 +43,19 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
         lat_plot = np.vstack((lat_plot, gridded_lat)) if lat_plot.size else gridded_lat
         temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
         r_out = np.vstack([r_out, temp]) if r_out.size else temp
+    # for dd in depthrange:
+    #     lon_plot = np.vstack((lon_plot, gridded_lon.reshape(-1, 1))) if lon_plot.size else gridded_lon.reshape(-1, 1)
+    #     lat_plot = np.vstack((lat_plot, gridded_lat.reshape(-1, 1))) if lat_plot.size else gridded_lat.reshape(-1, 1)
+    #     temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
+    #     r_out = np.vstack([r_out, temp]) if r_out.size else temp
 
     if sd_input == 0:
         selected_component = eval(input('Enter the desired stress component(s) to plot, possible values are Mises, '
                                         'S11, S22, S33, S12, S13, S23: \n'))
         selected_components = selected_component.split(" ")
         colorbarlimits = plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_plot,
-                                             selected_components, viscosity_input, b_input, python_base_path,
-                                             run_vec, coordinate_system_input)
+                                             selected_components, viscosity_input, visco_strain_input, b_input,
+                                             python_base_path, run_vec, coordinate_system_input)
         selected_columns = []
         for k in range(len(selected_components)):
             if selected_components[k] == 'Mises':
@@ -73,8 +77,8 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
                                         'Magnitude, U1, U2, U3: \n'))
         selected_components = selected_component.split(" ")
         colorbarlimits = plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_plot,
-                                             selected_components, viscosity_input, b_input, python_base_path,
-                                             run_vec, coordinate_system)
+                                             selected_components, viscosity_input, visco_strain_input, b_input,
+                                             python_base_path, run_vec, coordinate_system)
         selected_columns = []
         for k in range(len(selected_components)):
             if selected_components[k] == 'Magnitude':
@@ -128,6 +132,7 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
                                      ']_km.png'), bbox_inches='tight')
             plt.close(visual_check)
             plot_variable_out = griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'linear')
+            pdb.set_trace()
             # Open image
             stress_defo_figure = plt.figure()
             # Geographic map
@@ -148,9 +153,9 @@ def stress_deflection_plotter(run, sd_input, coordinate_system, complete_matrice
             scale = stress_defo_figure.colorbar(surf)
             # Color bar description
             if sd_input == 0:
-                scale.set_label(selected_components[j] + ' (Pa)', labelpad=10)
+                scale.set_label(selected_components[j] + ' [Pa]', labelpad=10)
             else:
-                scale.set_label(selected_components[j] + ' (m)', labelpad=10)
+                scale.set_label(selected_components[j] + ' [m]', labelpad=10)
             # Title settings
             if int(run) % 2 == 0:
                 rheology = ', wet rheology'

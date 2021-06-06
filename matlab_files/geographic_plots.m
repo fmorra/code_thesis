@@ -28,7 +28,7 @@ end
 iteration = '1';
 step = '0';
 simul_time = '1 ka'; % '31 ka'
-cycle = '2';
+cycle = '1';
 coordinate_system = 'geographical'; % cartesian or geographical
 quantity = 'stresses'; %stresses or deflections
 min_lat = -90;

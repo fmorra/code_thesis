@@ -1,11 +1,13 @@
 from region_counter import *
 from rotate_tensor import *
 from cart2geo import *
+import pandas as pd
 
 
 def associate_stress_coord(individual_element_paths, stress_part_values, large_node_matrix_path, headers_on,
                            stress_matrices_path, coord_file, coupled_stress_folder):
-
+    # This function associates each stress value vector to the corresponding centroid coordinates, both of them in
+    # Cartesian and geographical reference systems, then saves them in separate .csv files for each part.
     import os
     import numpy as np
     import csv
@@ -20,7 +22,8 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     csv_elem_files = [filename for filename in dir_csv_elem_files if filename.endswith(file_extension)]
     csv_stress_files = [filename for filename in dir_csv_stress_files if filename.endswith(file_extension)]
 
-    # Define the relevant folders and create them if they do not already exist
+    # Define the relevant folders to save centroid coordinates and complete tables and create them if they do not
+    # exist yet
     centroid_files_path = os.path.join(stress_part_values, 'Centroids')
     if not os.path.exists(centroid_files_path):
         os.mkdir(centroid_files_path)
@@ -43,24 +46,17 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
     # For all the next operations we will have to refer to the large matrix containing all the part nodes, because
     # for each part and for each element we will have to extract the coordinates of each node
 
-    # Decide whether to run the main algorithm or not based on the presence of the last file to be created
-    # if os.path.isfile(os.path.join(geographical_complete_files_path, 'Geographical_complete_file_' + coord_file[0:5] +
-    #                                                               '.csv')):
-
+    # Decide whether to run the main algorithm or not based on the presence of the last file to be generated
     if os.path.isfile(os.path.join(complete_files_path, 'Stress_association_completion_certificate.txt')):
         print('The files containing centroid stresses associated to the relative coordinates already exist, moving on '
               'to classification of stress values based on depth.')
     else:
         print('Associating stress components to corresponding centroids...')
         with open(large_node_matrix_path) as file_to_read:
-            # Transform the list into a traditional matrix
-            all_nodes = file_to_read.readlines()
-            all_nodes = [line.strip() for line in all_nodes[1:]]
-            all_nodes = [np.array([eval(i) for i in line.split(",")[:]]) for line in all_nodes]
-            all_nodes = np.array(all_nodes)
+            # Read the matrix containing the list of nodes for all parts
+            all_nodes = pd.read_csv(file_to_read, delimiter=",")
 
-            # If some matrices are completely empty, do not process them; this check can be done after transforming
-            # each matrix into an array
+            # Filter out unwanted parts and if some matrices are completely empty, do not process them
             for file_to_evaluate in range(len(csv_stress_files)):
                 if 'Region' in csv_stress_files[file_to_evaluate]:
                     csv_stress_files[file_to_evaluate] = 'to_delete'
@@ -73,11 +69,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             csv_stress_files = [a for a in csv_stress_files if a != 'to_delete']
             for file_to_evaluate in range(len(csv_stress_files)):
                 with open(os.path.join(individual_stress_paths, csv_stress_files[file_to_evaluate])) as matrix:
-                    matrix_to_evaluate = matrix.readlines()
-                    matrix_to_evaluate = [line.strip() for line in matrix_to_evaluate[1:]]
-                    matrix_to_evaluate = [np.array([eval(i) for i in line.split(",")[:]]) for line in
-                                          matrix_to_evaluate]
-                    matrix_to_evaluate = np.array(matrix_to_evaluate)
+                    matrix_to_evaluate = pd.read_csv(matrix, delimiter=",")
                     if len(matrix_to_evaluate) == 0:
                         csv_stress_files[file_to_evaluate] = 'to_delete'
 
@@ -90,9 +82,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             csv_elem_files = [_f for _f in csv_elem_files if _f]
             # Select the stress file to process
             part_file = csv_stress_files[0]
-            print('Processing the following stress file: ', part_file)
-            part_matrix_to_open = open(os.path.join(individual_stress_paths, part_file))
-            part_matrix = part_matrix_to_open.readlines()
+            print('Processing the following stress file: ' + part_file)
 
             file_to_read_logical = [i.split('Elements_Part_')[1] == part_file for i in csv_elem_files]
             file_to_read_index = np.array([file_to_read_logical.index(i) for i in file_to_read_logical
@@ -100,25 +90,25 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
             # Open the element file and transform both the element and stress files into arrays for easier handling
             file_to_read_index = file_to_read_index[0]
             all_elems_to_open = open(os.path.join(individual_element_paths, csv_elem_files[file_to_read_index]))
-            all_elems = all_elems_to_open.readlines()
-            all_elems = [line.strip() for line in all_elems[1:]]
-            all_elems = [np.array([eval(i) for i in line.split(",")[:]]) for line in all_elems]
-            all_elems = np.array(all_elems)
-            part_matrix = [line.strip() for line in part_matrix[1:]]
-            part_matrix = [np.array([eval(i) for i in line.split(",")[:]]) for line in part_matrix]
-            part_matrix = np.array(part_matrix)
+            # all_elems = all_elems_to_open.readlines()
+            # all_elems = [line.strip() for line in all_elems[1:]]
+            # all_elems = [np.array([eval(i) for i in line.split(",")[:]]) for line in all_elems]
+            # all_elems = np.array(all_elems)
+            all_elems = pd.read_csv(all_elems_to_open, delimiter=",")
+            part_matrix_to_open = open(os.path.join(individual_stress_paths, part_file))
+            part_matrix = pd.read_csv(part_matrix_to_open, delimiter=",")
             centroid_coord = np.zeros((len(part_matrix), 4))
 
             # For each element, fill a vector containing all of its nodes; extract the coordinates for each of them,
             # then calculate the mean across these nodes for all three coordinates
             for j in range(len(part_matrix)):
-                elem_nodes_index = [np.where(all_elems[:, 0] == part_matrix[j, 0])]
-                elem_nodes = all_elems[elem_nodes_index, 1:]
-                elem_nodes = elem_nodes[np.nonzero(elem_nodes)]
+                elem_nodes_index = [np.where(all_elems.iloc[:, 0] == part_matrix.iloc[j, 0])]
+                elem_nodes = all_elems.iloc[elem_nodes_index, 1:]
+                elem_nodes = elem_nodes.iloc[np.nonzero(elem_nodes)]
                 elem_coord_matrix = np.zeros((len(elem_nodes), 3))
                 for k in range(0, len(elem_nodes)):
-                    index = [np.where(all_nodes[:, 0] == elem_nodes[k])]
-                    nodes_coord = all_nodes[index, 1:]
+                    index = [np.where(all_nodes.iloc[:, 0] == elem_nodes.iloc[k])]
+                    nodes_coord = all_nodes.iloc[index, 1:]
                     if not len(nodes_coord) == 0:
                         elem_coord_matrix[k, :] = nodes_coord
                 for m in range(0, 3):
@@ -150,6 +140,7 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                 depths[k] = earth_radius - radial_centroid_distance[k]
             complete_file = np.column_stack((complete_file, radial_centroid_distance, depths))
             cartesian_coordinates = complete_file[:, 8:11]
+            # Calculated the geographical coordinates and append them to the previous matrix
             [lat, lon] = cart2geo(cartesian_coordinates)
             complete_file = np.column_stack((complete_file, lat, lon))
 
@@ -174,14 +165,11 @@ def associate_stress_coord(individual_element_paths, stress_part_values, large_n
                     writer = csv.writer(f_write)
                     writer.writerows(complete_file)
 
-            # Delete the first element of the lst containing the files to process and then delete the relative
-            # element file based on whether we are processing a region stress file or not
-            # csv_stress_files.pop(0)
-
             # Calculate and save the geographical stress components
             rotate_tensor(part_matrix, geographical_complete_files_path, headers_on, complete_headers,
                           complete_individual_path, part_file)
 
+        # Only save
         for csv_file in range(len(csv_stress_files)):
             if csv_stress_files[csv_file] == 'EARTH.csv':
                 if not os.path.exists(os.path.join(complete_files_path, 'Geographical_complete_file_coupled_' +

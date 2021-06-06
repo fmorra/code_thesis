@@ -16,26 +16,21 @@ import math
 
 def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, complete_matrices_path, report_path,
                       min_lat, max_lat, min_lon, max_lon, depths_to_plot, iteration, step, cycle, diff_matrix_path,
-                      run_folder, run, figure_counter, python_base_path, run_vec, simul_time):
+                      run, python_base_path, run_vec, simul_time, parts_to_plot, b_input):
 
-    # Definition of
-    parts_to_plot = ['EARTH']
     visco_strain_input = 0
     if visco_strain_input == 0:
-        quantity = 'viscosity'
+        quantity = ['viscosity']
     else:
-        quantity = 'strain_rate'
+        quantity = ['strain_rate']
     viscosity_input = 1
-    visco_diff_path = os.path.join(diff_matrix_path, quantity)
+    visco_diff_path = os.path.join(diff_matrix_path, quantity[0])
     if not os.path.exists(visco_diff_path):
         os.mkdir(visco_diff_path)
     e_file_name = 'e.dat'
     viscosity_figures_path = os.path.join(report_path, 'viscosity_plots')
     if not os.path.exists(viscosity_figures_path):
         os.mkdir(viscosity_figures_path)
-    b_input = 0
-    latlim = [min_lat, max_lat]
-    lonlim = [min_lon, max_lon]
     min_depth = depths_to_plot[0]
     max_depth = depths_to_plot[1]
     resolution = 0.25
@@ -52,6 +47,11 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         lat_plot = np.vstack((lat_plot, gridded_lat)) if lat_plot.size else gridded_lat
         temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
         r_out = np.vstack([r_out, temp]) if r_out.size else temp
+    # for dd in depthrange:
+    #     lon_plot = np.vstack((lon_plot, gridded_lon.reshape(-1, 1))) if lon_plot.size else gridded_lon.reshape(-1, 1)
+    #     lat_plot = np.vstack((lat_plot, gridded_lat.reshape(-1, 1))) if lat_plot.size else gridded_lat.reshape(-1, 1)
+    #     temp = (earth_radius - dd * 1e3) * np.ones((len(gridded_lon), len(gridded_lon[0])))
+    #     r_out = np.vstack([r_out, temp]) if r_out.size else temp
 
     for i in range(len(parts_to_plot)):
         iter_path = python_variables_base_path
@@ -62,29 +62,25 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
             matrix_to_open_path = os.path.join(complete_matrices_path, 'geographical_complete_file_' + parts_to_plot[i]
                                                + '.csv')
         colorbarlimits = plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_plot,
-                                             quantity, viscosity_input, b_input, python_base_path,
+                                             quantity, viscosity_input, visco_strain_input, b_input, python_base_path,
                                              run_vec, coordinate_system)
         opened_e = open(e_path)
-        e = pd.read_csv(opened_e, delimiter=",")
+        e = pd.read_csv(opened_e, delimiter=" ", header=None)
         elements = e.iloc[:, 0]
         alin = e.iloc[:, 1]
-        a = e.iloc[:, 2]
-        an = 3.5
-        strain_rate = np.zeros((len(e), 1))
+        a_coeff = e.iloc[:, 2]
+        power = 3.5
         opened_visco_matrix = open(matrix_to_open_path)
         opened_visco_matrix = pd.read_csv(opened_visco_matrix, delimiter=",")
-        mises = opened_visco_matrix.iloc[:, 2]
-        power = an
-        for j in range(len(strain_rate)):
-            strain_rate[j, 0] = alin[j] * mises[j] + a[j] * mises[j] ^ power
+        mises = opened_visco_matrix.iloc[:, 1]
+        strain_rate = alin * mises + a_coeff * ((abs(mises) ** power) * np.sign(mises))
         viscosity = mises / (3 * strain_rate)
         viscosity_matrix = np.zeros((len(opened_visco_matrix), 4))
         viscosity_matrix[:, 0] = elements
         viscosity_matrix[:, -3] = viscosity
         viscosity_matrix[:, -2] = strain_rate
         viscosity_matrix[:, -1] = mises
-        complete_matrix_with_viscosity = np.hstack((opened_visco_matrix, viscosity_matrix))
-        matrix_to_read = complete_matrix_with_viscosity
+        matrix_to_read = np.hstack((opened_visco_matrix, viscosity_matrix))
         depth = matrix_to_read[:, -7] / 1e3
         lat = matrix_to_read[:, -6]
         lon = matrix_to_read[:, -5]
@@ -99,9 +95,9 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
             plot_variable = np.log10(plot_variable)
         else:
             plot_variable = filtered_matrix[:, -2]
-        depth_out = filtered_matrix.iloc[:, -7]
-        filtered_lat = filtered_matrix.iloc[:, -6]
-        filtered_lon = filtered_matrix.iloc[:, -5]
+        depth_out = filtered_matrix[:, -7]
+        filtered_lat = filtered_matrix[:, -6]
+        filtered_lon = filtered_matrix[:, -5]
         filtered_r = earth_radius - 1e3 * depth_out
         matrix_for_difference[:, -4] = plot_variable
         matrix_for_difference[:, -3] = filtered_lat
@@ -109,9 +105,13 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         matrix_for_difference[:, -1] = depth_out
         pandas_length = len(filtered_lon)
         [x_in, y_in, z_in] = geo2cart(filtered_lat, filtered_lon, filtered_r, pandas_length)
-        [x_out, y_out, z_out] = geo2cart(np.deg2rad(lon_plot), np.deg2rad(lat_plot), r_out, pandas_length)
-        plot_variable_out = griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'linear')
-
+        [x_out, y_out, z_out] = geo2cart(lon_plot, lat_plot, r_out, pandas_length)
+        plot_variable_out = griddata((x_in, y_in, z_in), plot_variable, (x_out, y_out, z_out), 'nearest')
+        print(np.max(plot_variable_out))
+        print(np.min(plot_variable_out))
+        print(np.max(plot_variable))
+        print(np.min(plot_variable))
+        pdb.set_trace()
         visual_check = plt.figure()
         ax = Axes3D(visual_check)
         ax.scatter(x_in, y_in, z_in, alpha=0.8)
@@ -141,11 +141,11 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
                            alpha=0.7, extend='min', transform=chart.PlateCarree())
         scale = viscosity_figure.colorbar(surf)
         if sd_input == 0:
-            scale.set_label(quantity + ' (Pa)', labelpad=10)
+            scale.set_label(quantity[0] + ' [Pa s]', labelpad=10)
         else:
-            scale.set_label(quantity + ' (m)', labelpad=10)
+            scale.set_label(quantity[0] + ' [m]', labelpad=10)
         # Title settings
-        if run % 2 == 0:
+        if int(run) % 2 == 0:
             rheology = ', wet rheology'
         else:
             rheology = ', dry rheology'
@@ -155,20 +155,18 @@ def viscosity_plotter(sd_input, python_variables_base_path, coordinate_system, c
         else:
             plt.title('Time ' + simul_time + ', stress iteration ' + str(cycle) + rheology)
             # plt.title({['Time ' simul_time], [' ']});
-
+        plt.show()
         if visco_strain_input == 0:
             plt.savefig(os.path.join(viscosity_figures_path, 'Viscosity_' + parts_to_plot[i] + '[' + str(min_depth)
-                                     + '-' + str(max_depth) + ']_km_' + quantity + '_' + run + '_' + iteration + '_'
+                                     + '-' + str(max_depth) + ']_km_' + quantity[0] + '_' + run + '_' + iteration + '_'
                                      + step + '_' + cycle + '.png'))
         else:
             plt.savefig(os.path.join(viscosity_figures_path, 'Strain_rate_' + parts_to_plot[i] + '[' + str(min_depth)
-                                     + '-' + str(max_depth) + ']_km_' + quantity + '_' + run + '_' + iteration + '_'
+                                     + '-' + str(max_depth) + ']_km_' + quantity[0] + '_' + run + '_' + iteration + '_'
                                      + step + '_' + cycle + '.png'))
-        diff_matrix = pd.DataFrame(data=matrix_for_difference, columns=matrix_for_difference_headers[1:])
+        diff_matrix = pd.DataFrame(data=matrix_for_difference, columns=matrix_for_difference_headers)
         diff_matrix.to_csv(os.path.join(visco_diff_path, 'Iteration_' + iteration + '_step_' +
                                         step + '_cycle_' + cycle + '_' + str(min_depth) + '_' +
                                         str(max_depth) + '_km.csv'), index=False)
-
-    figure_counter = figure_counter+3
-
-    return figure_counter, visco_diff_path
+        pdb.set_trace()
+    return visco_diff_path

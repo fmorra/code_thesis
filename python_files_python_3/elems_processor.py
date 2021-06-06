@@ -7,6 +7,8 @@ import pdb
 
 def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path, stress_part_values, dat_path,
                     file_identifiers, headers_on):
+    # This function associates each element to the labels of the nodes that make it up and saves a .csv file for each
+    # part and then a larger list for all parts as for the nodes.
 
     # Define the lines which denote the parts of the file where we have to search for the element nodes; however,
     # towards the end of the part of the file we are interested in there is a series of lines containing the keyword
@@ -31,6 +33,7 @@ def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path, 
         os.makedirs(individual_element_paths)
     # Define the headers and decide whether to run the code or not based on the presence of the last file to be created
     headers = ['Label', 'Node_1', 'Node_2', 'Node_3', 'Node_4', 'Node_5', 'Node_6', 'Node_7', 'Node_8']
+    # Skip the main program if the last file to be generated is already there
     if os.path.isfile(large_elem_matrix_path):
         print('The files containing the element nodes already exist, moving on to centroid calculation and stress '
               'association.')
@@ -63,10 +66,11 @@ def elems_processor(node_lines, elem_lines, nset_lines, stress_processing_path, 
                         if elem_vector[line - new_elem_lines[k] + 1, 1] == elem_vector[line - new_elem_lines[k] + 1, 2]:
                             elem_vector[line - new_elem_lines[k] + 1, :] = 0
 
+                # Only keep the non-zero values in the resulting vectors
                 elem_vector = elem_vector[~np.all(elem_vector == 0, axis=1)]
                 individual_elem_matrix = elem_vector
 
-                # Save inndividual element matrices in csv format and append them to the large element lists
+                # Save individual element matrices in csv format and append them to the large element lists
                 if headers_on == 1:
                     with open(os.path.join(individual_element_paths, 'Elements_Part_' + file_identifiers[k] + ".csv"),
                               'wb') as f_write:

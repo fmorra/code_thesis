@@ -1,4 +1,7 @@
 def dat_processor(fname):
+    # This function reads the .dat file containing node coordinates and the node labels making up each element and
+    # stores the lines where they are defined for the next processing operations. Another .dat file, easier to read
+    # for the next scripts, is also saved
     # Open the dat file
     with open(fname, "r+") as read_dat:
         # Read the file as a list of lines

@@ -5,7 +5,8 @@ import pdb
 
 
 def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_plot, selected_components,
-                        viscosity_input, b_input, python_base_path, run_vec, coordinate_system_input):
+                        viscosity_input, visco_strain_input,  b_input, python_base_path, run_vec,
+                        coordinate_system_input):
     runs = run_vec
     extremes_matrix = np.zeros((len(runs), 2 * len(selected_components)))
     new_scale_limits = np.zeros((1, len(extremes_matrix[0])))
@@ -98,27 +99,26 @@ def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_
             scale_limits = np.hstack((minima[0::2], maxima[1::2]))
         elif viscosity_input == 1:
             e_path = os.path.join(run_folder, 'e.dat')
-            e = pd.read_csv(e_path, delimiter=" ")
+            e = pd.read_csv(e_path, delimiter=" ", header=None)
             elements = e.iloc[:, 0]
             alin = e.iloc[:, 1]
             a = e.iloc[:, 2]
             an = 3.5
-            strain_rate = np.zeros((len(e), 1))
             exponent = an
             visco_extremes_matrix = np.zeros((len(full_stress_files), 2))
             for l in range(len(full_stress_files)):
-                opened_viscosity_matrix = pd.read_csv(full_stress_files[l], delimiter=",", skiprows=1)
+                opened_viscosity_matrix = pd.read_csv(full_stress_files[l], delimiter=",")
                 mises = opened_viscosity_matrix.iloc[:, 1]
                 depth = opened_viscosity_matrix.iloc[:, -3] / 1e3
                 lat = opened_viscosity_matrix.iloc[:, -2]
                 lon = opened_viscosity_matrix.iloc[:, -1]
-                depth_condition = (depth > min_depth) & (depth < max_depth)
-                lat_condition = (lat > min_lat) & (lat < max_lat)
-                lon_condition = (lon > min_lon) & (lon < max_lon)
-                condition_matrix = opened_viscosity_matrix[depth_condition & lat_condition & lon_condition]
+                depth_condition = (depth >= min_depth) & (depth <= max_depth)
+                lat_condition = (lat >= min_lat) & (lat <= max_lat)
+                lon_condition = (lon >= min_lon) & (lon <= max_lon)
                 if b_input == 0:
-                    for j in range(len(strain_rate)):
-                        strain_rate[j, 1] = alin[j] * mises[j] + a[j] * mises[j] ^ exponent
+                    # for j in range(len(strain_rate)):
+                    #     strain_rate[j] = alin[j] * mises[j] + a[j] * mises[j] ** exponent
+                    strain_rate = alin * mises + a * mises ** exponent
                     viscosity = mises / (3 * strain_rate)
                     viscosity_matrix = np.zeros((len(opened_viscosity_matrix), 4))
                     viscosity_matrix[:, 0] = elements
@@ -127,22 +127,25 @@ def plot_scale_extremes(sd_input, min_lat, max_lat, min_lon, max_lon, depths_to_
                     viscosity_matrix[:, -1] = mises
                     complete_matrix_with_viscosity = np.hstack((opened_viscosity_matrix, viscosity_matrix))
                     condition_matrix = complete_matrix_with_viscosity[depth_condition & lat_condition & lon_condition]
-                    variable = condition_matrix[:, -3]
+                    if visco_strain_input == 0:
+                        variable = condition_matrix[:, -3]
+                    else:
+                        variable = condition_matrix[:, -2]
                     variable_extremes = [np.min(variable), np.max(variable)]
-                    visco_extremes_matrix[l, 1: 2] = variable_extremes
-                    scale_limits = [np.min(visco_extremes_matrix[:, 1]), np.max(visco_extremes_matrix[:, 2])]
+                    visco_extremes_matrix[l, 0:] = variable_extremes
+                    scale_limits = [np.min(visco_extremes_matrix[:, 0]), np.max(visco_extremes_matrix[:, 1])]
                 else:
                     b_matrix = np.zeros((len(full_stress_files), 2))
-                    for m in range(len(full_stress_files)):
-                        complete_b_matrix = np.hstack((opened_viscosity_matrix, alin, a))
-                        data_points_indices = complete_b_matrix[depth_condition & lat_condition & lon_condition]
-                        selected_columns = np.hstack((alin[data_points_indices, :], a[data_points_indices, :]))
-                        for n in range(len(selected_columns[0])):
-                            variable = selected_columns[:, n]
-                            variable_extremes = [np.min(variable), np.max(variable)]
-                            b_matrix[n, 2 * m - 1: 2 * n] = variable_extremes
-                        scale_limits = [np.min(b_matrix[:, 1: 2:len(b_matrix[0]) - 1]),
-                                        np.max(b_matrix[:, 2: 2:len(b_matrix[0])])]
+                    selected_columns = np.hstack((alin, a))
+                    complete_b_matrix = np.hstack((opened_viscosity_matrix, selected_columns))
+                    data_points_indices = complete_b_matrix[depth_condition & lat_condition & lon_condition]
+                    for n in range(len(selected_columns[0])):
+                        variable = data_points_indices[:, -len(selected_columns[0])+n]
+                        variable_extremes = [np.min(variable), np.max(variable)]
+                        b_matrix[l, 2*n:2*n+2] = variable_extremes
+                    minima = np.min(b_matrix, axis=0)
+                    maxima = np.max(b_matrix, axis=0)
+                    scale_limits = np.hstack((minima[0::2], maxima[1::2]))
         else:
             pass
         extremes_matrix[run_index, :] = scale_limits
